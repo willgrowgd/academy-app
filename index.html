@@ -195,42 +195,64 @@
     </div>
   </div>
 
-  <div class="stat-row" id="statRow"></div>
+  <div style="display:flex; gap:8px; margin-bottom:20px;">
+    <button class="btn btn-primary tabBtn" id="tabStudents">학생 명단</button>
+    <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
+  </div>
 
-  <div class="panel">
-    <div class="toolbar">
-      <div class="search">
-        <span>🔎</span>
-        <input type="text" id="searchInput" placeholder="이름으로 검색">
+  <div id="studentsView">
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="panel">
+      <div class="toolbar">
+        <div class="search">
+          <span>🔎</span>
+          <input type="text" id="searchInput" placeholder="이름으로 검색">
+        </div>
+        <select class="filter" id="statusFilter">
+          <option value="all">전체 상태</option>
+          <option value="재원">재원</option>
+          <option value="퇴원">퇴원</option>
+        </select>
       </div>
-      <select class="filter" id="statusFilter">
-        <option value="all">전체 상태</option>
-        <option value="재원">재원</option>
-        <option value="퇴원">퇴원</option>
-      </select>
+
+      <div id="tableArea">
+        <table>
+          <thead>
+            <tr>
+              <th>이름</th>
+              <th>반</th>
+              <th>생년월일</th>
+              <th>성별</th>
+              <th>학생 연락처</th>
+              <th>학부모 연락처</th>
+              <th>입학일</th>
+              <th>상태</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="emptyState" style="display:none;">
+          <div class="big">🗂️</div>
+          학생 정보가 아직 없어요. 오른쪽 위 [+ 학생 추가]로 시작해보세요.
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div id="tableArea">
-      <table>
-        <thead>
-          <tr>
-            <th>이름</th>
-            <th>반</th>
-            <th>생년월일</th>
-            <th>성별</th>
-            <th>학생 연락처</th>
-            <th>학부모 연락처</th>
-            <th>입학일</th>
-            <th>상태</th>
-            <th>관리</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-      <div class="empty" id="emptyState" style="display:none;">
-        <div class="big">🗂️</div>
-        학생 정보가 아직 없어요. 오른쪽 위 [+ 학생 추가]로 시작해보세요.
+  <div id="attendanceView" style="display:none;">
+    <div class="panel">
+      <div class="toolbar">
+        <div class="search" style="max-width:220px;">
+          <span>📅</span>
+          <input type="date" id="attDate">
+        </div>
+        <select class="filter" id="attClassFilter">
+          <option value="all">전체 반</option>
+        </select>
       </div>
+      <div id="attArea"></div>
     </div>
   </div>
 </div>
@@ -456,6 +478,114 @@
     currentFilter = e.target.value;
     render();
   });
+
+  // ====== 탭 전환 ======
+  const tabStudents = document.getElementById('tabStudents');
+  const tabAttendance = document.getElementById('tabAttendance');
+  const studentsView = document.getElementById('studentsView');
+  const attendanceView = document.getElementById('attendanceView');
+
+  tabStudents.onclick = () => {
+    studentsView.style.display = 'block';
+    attendanceView.style.display = 'none';
+    tabStudents.className = 'btn btn-primary tabBtn';
+    tabAttendance.className = 'btn btn-ghost tabBtn';
+  };
+  tabAttendance.onclick = () => {
+    studentsView.style.display = 'none';
+    attendanceView.style.display = 'block';
+    tabAttendance.className = 'btn btn-primary tabBtn';
+    tabStudents.className = 'btn btn-ghost tabBtn';
+    loadAttendance();
+  };
+
+  // ====== 출결 관련 ======
+  const attDateInput = document.getElementById('attDate');
+  const attClassFilter = document.getElementById('attClassFilter');
+  const attArea = document.getElementById('attArea');
+  const ATT_STATUSES = ['출석', '지각', '결석', '조퇴'];
+
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  attDateInput.value = todayStr();
+  attDateInput.addEventListener('change', loadAttendance);
+  attClassFilter.addEventListener('change', renderAttendance);
+
+  let attRecords = {}; // student_id -> {status, id}
+
+  function refreshClassFilterOptions(){
+    const classes = [...new Set(students.filter(s => s.status === '재원' && s.class_name).map(s => s.class_name))];
+    const current = attClassFilter.value;
+    attClassFilter.innerHTML = '<option value="all">전체 반</option>' +
+      classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    if(classes.includes(current)) attClassFilter.value = current;
+  }
+
+  async function loadAttendance(){
+    if(!students.length){
+      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
+      students = data || [];
+    }
+    refreshClassFilterOptions();
+
+    const date = attDateInput.value;
+    const { data, error } = await sb.from('attendance').select('*').eq('date', date);
+    if(error){
+      attArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>출결 기록을 불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    attRecords = {};
+    (data || []).forEach(r => { attRecords[r.student_id] = r; });
+    renderAttendance();
+  }
+
+  function renderAttendance(){
+    const classFilter = attClassFilter.value;
+    const active = students.filter(s => s.status === '재원' && (classFilter === 'all' || s.class_name === classFilter));
+
+    if(!active.length){
+      attArea.innerHTML = `<div class="empty"><div class="big">🙂</div>표시할 재원생이 없어요.</div>`;
+      return;
+    }
+
+    attArea.innerHTML = '';
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr><th>이름</th><th>반</th><th>출결 상태</th></tr></thead>`;
+    const tb = document.createElement('tbody');
+
+    active.forEach(s => {
+      const tr = document.createElement('tr');
+      const rec = attRecords[s.id];
+      const btns = ATT_STATUSES.map(st => {
+        const isActive = rec && rec.status === st;
+        return `<button type="button" class="btn btn-sm attStatusBtn ${isActive ? 'btn-primary' : 'btn-ghost'}" data-status="${st}">${st}</button>`;
+      }).join(' ');
+      tr.innerHTML = `
+        <td data-label="이름" class="name-cell">${escapeHtml(s.name)}</td>
+        <td data-label="반">${escapeHtml(s.class_name || '-')}</td>
+        <td data-label="출결 상태">${btns}</td>
+      `;
+      tr.querySelectorAll('.attStatusBtn').forEach(btn => {
+        btn.onclick = () => setAttendance(s.id, btn.dataset.status);
+      });
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    attArea.appendChild(table);
+  }
+
+  async function setAttendance(studentId, status){
+    const date = attDateInput.value;
+    const { data, error } = await sb.from('attendance')
+      .upsert({ student_id: studentId, date, status }, { onConflict: 'student_id,date' })
+      .select();
+    if(error){ showToast('출결 저장 실패: ' + error.message); return; }
+    if(data && data[0]) attRecords[studentId] = data[0];
+    renderAttendance();
+    showToast(`${status} 처리됐어요`);
+  }
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
