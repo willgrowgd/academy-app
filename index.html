@@ -163,14 +163,36 @@
 </head>
 <body>
 
-<div class="wrap">
+<!-- 로그인 화면 -->
+<div id="loginScreen" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div class="panel" style="max-width:380px; width:100%;">
+    <p class="brand-eyebrow">Student Records</p>
+    <h1 class="brand-title" style="margin-bottom:20px;">로그인</h1>
+    <div class="field">
+      <label>이메일</label>
+      <input type="email" id="loginEmail" placeholder="teacher1@academy.local">
+    </div>
+    <div class="field">
+      <label>비밀번호</label>
+      <input type="password" id="loginPassword" placeholder="비밀번호">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" style="width:100%; justify-content:center; margin-top:6px;">로그인</button>
+    <p id="loginError" style="color:var(--danger); font-size:13px; margin-top:10px; display:none;"></p>
+  </div>
+</div>
+
+<!-- 메인 화면 (로그인 후에만 보임) -->
+<div class="wrap" id="mainScreen" style="display:none;">
   <div class="top">
     <div>
       <p class="brand-eyebrow">Student Records</p>
       <h1 class="brand-title">학생 관리</h1>
       <p class="brand-sub">우리 학원 학생들의 기본 정보를 관리해요</p>
     </div>
-    <button class="btn btn-primary" id="openAddBtn">+ 학생 추가</button>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn btn-ghost" id="logoutBtn">로그아웃</button>
+      <button class="btn btn-primary" id="openAddBtn">+ 학생 추가</button>
+    </div>
   </div>
 
   <div class="stat-row" id="statRow"></div>
@@ -435,7 +457,56 @@
     render();
   });
 
-  loadStudents();
+  // ====== 로그인 관련 ======
+  const loginScreen = document.getElementById('loginScreen');
+  const mainScreen = document.getElementById('mainScreen');
+  const loginError = document.getElementById('loginError');
+
+  function showApp(){
+    loginScreen.style.display = 'none';
+    mainScreen.style.display = 'block';
+    loadStudents();
+  }
+  function showLogin(){
+    loginScreen.style.display = 'flex';
+    mainScreen.style.display = 'none';
+  }
+
+  document.getElementById('loginBtn').onclick = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    loginError.style.display = 'none';
+
+    if(!email || !password){
+      loginError.textContent = '이메일과 비밀번호를 모두 입력해주세요';
+      loginError.style.display = 'block';
+      return;
+    }
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){
+      loginError.textContent = '로그인 실패: 이메일 또는 비밀번호를 확인해주세요';
+      loginError.style.display = 'block';
+      return;
+    }
+    showApp();
+  };
+
+  document.getElementById('logoutBtn').onclick = async () => {
+    await sb.auth.signOut();
+    showLogin();
+  };
+
+  // 엔터키로도 로그인 가능하게
+  document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+
+  // 페이지 열었을 때 이미 로그인 되어있는지 확인
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if(session){ showApp(); } else { showLogin(); }
+  })();
 </script>
 </body>
 </html>
