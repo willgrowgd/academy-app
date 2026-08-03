@@ -198,6 +198,7 @@
   <div style="display:flex; gap:8px; margin-bottom:20px;">
     <button class="btn btn-primary tabBtn" id="tabStudents">학생 명단</button>
     <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
+    <button class="btn btn-ghost tabBtn" id="tabTuition">학원비 관리</button>
   </div>
 
   <div id="studentsView">
@@ -254,6 +255,88 @@
       </div>
       <div id="attArea"></div>
       <p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;">💡 선택된 버튼(진한 초록색)을 다시 누르면 체크가 취소돼요.</p>
+    </div>
+  </div>
+
+  <div id="tuitionView" style="display:none;">
+    <div class="stat-row" id="tuitionStatRow"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="search" style="max-width:180px;">
+          <span>📅</span>
+          <input type="month" id="tuitionMonth">
+        </div>
+        <select class="filter" id="tuitionStatusFilter">
+          <option value="all">전체 상태</option>
+          <option value="미납">미납</option>
+          <option value="납부완료">납부완료</option>
+        </select>
+        <button class="btn btn-primary" id="openTuitionAddBtn" style="margin-left:auto;">+ 학원비 추가</button>
+      </div>
+      <div id="tuitionArea"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 학원비 추가/수정 모달 -->
+<div class="overlay" id="tuitionOverlay">
+  <div class="modal">
+    <h2 id="tuitionModalTitle">학원비 추가</h2>
+    <input type="hidden" id="tf_id">
+    <div class="field">
+      <label>학생 *</label>
+      <select id="tf_student"></select>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>해당 월 *</label>
+        <input type="month" id="tf_month">
+      </div>
+      <div class="field">
+        <label>금액</label>
+        <input type="number" id="tf_amount" placeholder="예: 300000">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>상태</label>
+        <select id="tf_status">
+          <option value="미납">미납</option>
+          <option value="납부완료">납부완료</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>결제수단</label>
+        <select id="tf_method">
+          <option value="">선택 안 함</option>
+          <option value="카드">카드</option>
+          <option value="현금">현금</option>
+          <option value="계좌이체">계좌이체</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>수강 시작일</label>
+        <input type="date" id="tf_start">
+      </div>
+      <div class="field">
+        <label>수강 종료일</label>
+        <input type="date" id="tf_end">
+      </div>
+    </div>
+    <div class="field">
+      <label>납부일</label>
+      <input type="date" id="tf_paiddate">
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="tf_memo" rows="2"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="tuitionCancelBtn">취소</button>
+      <button class="btn btn-primary" id="tuitionSaveBtn">저장</button>
     </div>
   </div>
 </div>
@@ -483,21 +566,36 @@
   // ====== 탭 전환 ======
   const tabStudents = document.getElementById('tabStudents');
   const tabAttendance = document.getElementById('tabAttendance');
+  const tabTuition = document.getElementById('tabTuition');
   const studentsView = document.getElementById('studentsView');
   const attendanceView = document.getElementById('attendanceView');
+  const tuitionView = document.getElementById('tuitionView');
+
+  function setActiveTab(activeBtn){
+    [tabStudents, tabAttendance, tabTuition].forEach(b => {
+      b.className = (b === activeBtn) ? 'btn btn-primary tabBtn' : 'btn btn-ghost tabBtn';
+    });
+  }
 
   tabStudents.onclick = () => {
     studentsView.style.display = 'block';
     attendanceView.style.display = 'none';
-    tabStudents.className = 'btn btn-primary tabBtn';
-    tabAttendance.className = 'btn btn-ghost tabBtn';
+    tuitionView.style.display = 'none';
+    setActiveTab(tabStudents);
   };
   tabAttendance.onclick = () => {
     studentsView.style.display = 'none';
     attendanceView.style.display = 'block';
-    tabAttendance.className = 'btn btn-primary tabBtn';
-    tabStudents.className = 'btn btn-ghost tabBtn';
+    tuitionView.style.display = 'none';
+    setActiveTab(tabAttendance);
     loadAttendance();
+  };
+  tabTuition.onclick = () => {
+    studentsView.style.display = 'none';
+    attendanceView.style.display = 'none';
+    tuitionView.style.display = 'block';
+    setActiveTab(tabTuition);
+    loadTuition();
   };
 
   // ====== 출결 관련 ======
@@ -602,6 +700,153 @@
     delete attRecords[studentId];
     renderAttendance();
     showToast('체크가 지워졌어요');
+  }
+
+  // ====== 학원비 관련 ======
+  const tuitionOverlay = document.getElementById('tuitionOverlay');
+  const tuitionMonthInput = document.getElementById('tuitionMonth');
+  const tuitionStatusFilter = document.getElementById('tuitionStatusFilter');
+  const tuitionArea = document.getElementById('tuitionArea');
+  const tuitionStatRow = document.getElementById('tuitionStatRow');
+  let tuitionRecords = [];
+
+  function currentMonthStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  tuitionMonthInput.value = currentMonthStr();
+  tuitionMonthInput.addEventListener('change', loadTuition);
+  tuitionStatusFilter.addEventListener('change', renderTuition);
+
+  function fillStudentSelect(){
+    const sel = document.getElementById('tf_student');
+    sel.innerHTML = students
+      .filter(s => s.status === '재원')
+      .map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}</option>`)
+      .join('');
+  }
+
+  function openTuitionModal(rec){
+    fillStudentSelect();
+    document.getElementById('tuitionModalTitle').textContent = rec ? '학원비 수정' : '학원비 추가';
+    document.getElementById('tf_id').value = rec ? rec.id : '';
+    document.getElementById('tf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
+    document.getElementById('tf_month').value = rec ? rec.month : tuitionMonthInput.value;
+    document.getElementById('tf_amount').value = rec ? rec.amount : '';
+    document.getElementById('tf_status').value = rec ? rec.status : '미납';
+    document.getElementById('tf_method').value = rec?.payment_method || '';
+    document.getElementById('tf_start').value = rec?.period_start || '';
+    document.getElementById('tf_end').value = rec?.period_end || '';
+    document.getElementById('tf_paiddate').value = rec?.paid_date || '';
+    document.getElementById('tf_memo').value = rec?.memo || '';
+    tuitionOverlay.classList.add('show');
+  }
+  function closeTuitionModal(){ tuitionOverlay.classList.remove('show'); }
+
+  document.getElementById('openTuitionAddBtn').onclick = () => openTuitionModal(null);
+  document.getElementById('tuitionCancelBtn').onclick = closeTuitionModal;
+  tuitionOverlay.addEventListener('click', (e) => { if(e.target === tuitionOverlay) closeTuitionModal(); });
+
+  document.getElementById('tuitionSaveBtn').onclick = async () => {
+    const studentId = document.getElementById('tf_student').value;
+    const month = document.getElementById('tf_month').value;
+    if(!studentId || !month){ showToast('학생과 해당 월을 선택해주세요'); return; }
+
+    const payload = {
+      student_id: studentId,
+      month,
+      amount: Number(document.getElementById('tf_amount').value) || 0,
+      status: document.getElementById('tf_status').value,
+      payment_method: document.getElementById('tf_method').value || null,
+      period_start: document.getElementById('tf_start').value || null,
+      period_end: document.getElementById('tf_end').value || null,
+      paid_date: document.getElementById('tf_paiddate').value || null,
+      memo: document.getElementById('tf_memo').value || null,
+    };
+
+    const editId = document.getElementById('tf_id').value;
+    let error;
+    if(editId){
+      ({ error } = await sb.from('tuition').update(payload).eq('id', editId));
+    } else {
+      ({ error } = await sb.from('tuition').upsert(payload, { onConflict: 'student_id,month' }));
+    }
+    if(error){ showToast('저장 실패: ' + error.message); return; }
+    showToast('저장됐어요');
+    closeTuitionModal();
+    loadTuition();
+  };
+
+  async function deleteTuition(id){
+    if(!confirm('이 학원비 기록을 삭제할까요?')) return;
+    const { error } = await sb.from('tuition').delete().eq('id', id);
+    if(error){ showToast('삭제 실패: ' + error.message); return; }
+    showToast('삭제됐어요');
+    loadTuition();
+  }
+
+  async function loadTuition(){
+    if(!students.length){
+      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
+      students = data || [];
+    }
+    const month = tuitionMonthInput.value;
+    const { data, error } = await sb.from('tuition').select('*').eq('month', month);
+    if(error){
+      tuitionArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>학원비 정보를 불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    tuitionRecords = data || [];
+    renderTuition();
+  }
+
+  function renderTuition(){
+    const filterStatus = tuitionStatusFilter.value;
+    const filtered = tuitionRecords.filter(r => filterStatus === 'all' || r.status === filterStatus);
+
+    const paidCount = tuitionRecords.filter(r => r.status === '납부완료').length;
+    const unpaidCount = tuitionRecords.filter(r => r.status === '미납').length;
+    const totalAmount = tuitionRecords.filter(r => r.status === '납부완료').reduce((sum,r) => sum + Number(r.amount||0), 0);
+    tuitionStatRow.innerHTML = `
+      <div class="stat"><div class="num">${paidCount}</div><div class="label">납부완료</div></div>
+      <div class="stat"><div class="num">${unpaidCount}</div><div class="label">미납</div></div>
+      <div class="stat"><div class="num">${totalAmount.toLocaleString()}원</div><div class="label">이번달 수납액</div></div>
+    `;
+
+    if(!filtered.length){
+      tuitionArea.innerHTML = `<div class="empty"><div class="big">💳</div>해당 월의 학원비 기록이 없어요. [+ 학원비 추가]로 등록해보세요.</div>`;
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr>
+      <th>학생</th><th>금액</th><th>상태</th><th>결제수단</th><th>수강기간</th><th>납부일</th><th>관리</th>
+    </tr></thead>`;
+    const tb = document.createElement('tbody');
+
+    filtered.forEach(r => {
+      const student = students.find(s => s.id === r.student_id);
+      const period = (r.period_start || r.period_end) ? `${r.period_start||'-'} ~ ${r.period_end||'-'}` : '-';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
+        <td data-label="금액">${Number(r.amount||0).toLocaleString()}원</td>
+        <td data-label="상태"><span class="badge ${r.status === '납부완료' ? 'on' : 'off'}">${r.status}</span></td>
+        <td data-label="결제수단">${r.payment_method || '-'}</td>
+        <td data-label="수강기간">${period}</td>
+        <td data-label="납부일">${r.paid_date || '-'}</td>
+        <td data-label="관리">
+          <button class="btn btn-ghost btn-sm editTuitionBtn">수정</button>
+          <button class="btn btn-danger btn-sm delTuitionBtn">삭제</button>
+        </td>
+      `;
+      tr.querySelector('.editTuitionBtn').onclick = () => openTuitionModal(r);
+      tr.querySelector('.delTuitionBtn').onclick = () => deleteTuition(r.id);
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    tuitionArea.innerHTML = '';
+    tuitionArea.appendChild(table);
   }
 
   // ====== 로그인 관련 ======
