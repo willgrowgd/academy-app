@@ -937,9 +937,9 @@
 
   function fillStudentSelect(){
     const sel = document.getElementById('tf_student');
-    sel.innerHTML = students
-      .filter(s => s.status === '재원')
-      .map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}</option>`)
+    const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
+    sel.innerHTML = sorted
+      .map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`)
       .join('');
   }
 
@@ -1205,8 +1205,8 @@
   let counselingRecords = [];
 
   function fillCounselingStudentSelects(){
-    const activeStudents = students.filter(s => s.status === '재원');
-    const options = activeStudents.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}</option>`).join('');
+    const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
     document.getElementById('cf_student').innerHTML = options;
     const current = counselingStudentFilter.value;
     counselingStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
