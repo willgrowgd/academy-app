@@ -654,7 +654,7 @@
 
     attArea.innerHTML = '';
     const table = document.createElement('table');
-    table.innerHTML = `<thead><tr><th>이름</th><th>반</th><th>출결 상태</th></tr></thead>`;
+    table.innerHTML = `<thead><tr><th>이름</th><th>반</th><th>출결 상태</th><th>사유/메모</th></tr></thead>`;
     const tb = document.createElement('tbody');
 
     active.forEach(s => {
@@ -668,16 +668,22 @@
         <td data-label="이름" class="name-cell">${escapeHtml(s.name)}</td>
         <td data-label="반">${escapeHtml(s.class_name || '-')}</td>
         <td data-label="출결 상태">${btns}</td>
+        <td data-label="사유/메모"><input type="text" class="attMemoInput" placeholder="예: 몸살로 결석" value="${escapeHtml(rec?.memo || '')}" style="width:100%; font-family:inherit; font-size:13.5px; padding:7px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg);"></td>
       `;
       tr.querySelectorAll('.attStatusBtn').forEach(btn => {
         btn.onclick = () => {
           const already = rec && rec.status === btn.dataset.status;
+          const memoVal = tr.querySelector('.attMemoInput').value;
           if(already){
             clearAttendance(s.id);
           } else {
-            setAttendance(s.id, btn.dataset.status);
+            setAttendance(s.id, btn.dataset.status, memoVal);
           }
         };
+      });
+      tr.querySelector('.attMemoInput').addEventListener('blur', (e) => {
+        const status = (attRecords[s.id] && attRecords[s.id].status) || '출석';
+        setAttendance(s.id, status, e.target.value, true);
       });
       tb.appendChild(tr);
     });
@@ -685,15 +691,21 @@
     attArea.appendChild(table);
   }
 
-  async function setAttendance(studentId, status){
+  async function setAttendance(studentId, status, memo, isMemoOnlySave){
     const date = attDateInput.value;
+    const payload = { student_id: studentId, date, status };
+    if(memo !== undefined) payload.memo = memo || null;
     const { data, error } = await sb.from('attendance')
-      .upsert({ student_id: studentId, date, status }, { onConflict: 'student_id,date' })
+      .upsert(payload, { onConflict: 'student_id,date' })
       .select();
     if(error){ showToast('출결 저장 실패: ' + error.message); return; }
     if(data && data[0]) attRecords[studentId] = data[0];
-    renderAttendance();
-    showToast(`${status} 처리됐어요`);
+    if(isMemoOnlySave){
+      showToast('메모가 저장됐어요');
+    } else {
+      renderAttendance();
+      showToast(`${status} 처리됐어요`);
+    }
   }
 
   async function clearAttendance(studentId){
