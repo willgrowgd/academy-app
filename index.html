@@ -224,8 +224,8 @@
             <tr>
               <th>이름</th>
               <th>반</th>
+              <th>학년</th>
               <th>생년월일</th>
-              <th>성별</th>
               <th>학생 연락처</th>
               <th>학부모 연락처</th>
               <th>입학일</th>
@@ -527,12 +527,8 @@
         <input type="date" id="f_birth">
       </div>
       <div class="field">
-        <label>성별</label>
-        <select id="f_gender">
-          <option value="">선택 안 함</option>
-          <option value="남">남</option>
-          <option value="여">여</option>
-        </select>
+        <label>학년</label>
+        <input type="text" id="f_grade" placeholder="예: 초등 3학년">
       </div>
     </div>
     <div class="row2">
@@ -610,7 +606,7 @@
     document.getElementById('editId').value = student ? student.id : '';
     document.getElementById('f_name').value = student?.name || '';
     document.getElementById('f_birth').value = student?.birth_date || '';
-    document.getElementById('f_gender').value = student?.gender || '';
+    document.getElementById('f_grade').value = student?.grade || '';
     document.getElementById('f_class').value = student?.class_name || '';
     document.getElementById('f_status').value = student?.status || '재원';
     document.getElementById('f_sphone').value = student?.student_phone || '';
@@ -632,7 +628,7 @@
     const payload = {
       name,
       birth_date: document.getElementById('f_birth').value || null,
-      gender: document.getElementById('f_gender').value || null,
+      grade: document.getElementById('f_grade').value || null,
       class_name: document.getElementById('f_class').value || null,
       status: document.getElementById('f_status').value,
       student_phone: document.getElementById('f_sphone').value || null,
@@ -678,8 +674,8 @@
       tr.innerHTML = `
         <td data-label="이름" class="name-cell">${escapeHtml(s.name)}</td>
         <td data-label="반">${escapeHtml(s.class_name || '-')}</td>
+        <td data-label="학년">${escapeHtml(s.grade || '-')}</td>
         <td data-label="생년월일">${s.birth_date || '-'}</td>
-        <td data-label="성별">${s.gender || '-'}</td>
         <td data-label="학생 연락처">${s.student_phone || '-'}</td>
         <td data-label="학부모 연락처">${s.parent_phone || '-'}</td>
         <td data-label="입학일">${s.enrollment_date || '-'}</td>
