@@ -199,6 +199,7 @@
     <button class="btn btn-primary tabBtn" id="tabStudents">학생 명단</button>
     <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
     <button class="btn btn-ghost tabBtn" id="tabTuition">학원비 관리</button>
+    <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리</button>
   </div>
 
   <div id="studentsView">
@@ -277,6 +278,173 @@
         </div>
       </div>
       <div id="tuitionArea"></div>
+    </div>
+  </div>
+
+  <div id="counselingView" style="display:none;">
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button class="btn btn-primary tabBtn" id="subTabNewInquiry">신규상담</button>
+      <button class="btn btn-ghost tabBtn" id="subTabCounseling">재원상담</button>
+    </div>
+
+    <!-- 신규상담 -->
+    <div id="newInquiryView">
+      <div class="panel">
+        <div class="toolbar">
+          <div class="search">
+            <span>🔎</span>
+            <input type="text" id="inquirySearchInput" placeholder="이름으로 검색">
+          </div>
+          <select class="filter" id="inquiryStatusFilter">
+            <option value="all">전체 상태</option>
+            <option value="상담중">상담중</option>
+            <option value="등록완료">등록완료</option>
+            <option value="보류">보류</option>
+            <option value="미등록">미등록</option>
+          </select>
+          <button class="btn btn-primary" id="openInquiryAddBtn" style="margin-left:auto;">+ 신규상담 추가</button>
+        </div>
+        <div id="inquiryArea"></div>
+      </div>
+    </div>
+
+    <!-- 재원상담 -->
+    <div id="existingCounselingView" style="display:none;">
+      <div class="panel">
+        <div class="toolbar">
+          <select class="filter" id="counselingStudentFilter">
+            <option value="all">전체 학생</option>
+          </select>
+          <button class="btn btn-primary" id="openCounselingAddBtn" style="margin-left:auto;">+ 상담 추가</button>
+        </div>
+        <div id="counselingArea"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 신규상담 추가/수정 모달 -->
+<div class="overlay" id="inquiryOverlay">
+  <div class="modal">
+    <h2 id="inquiryModalTitle">신규상담 추가</h2>
+    <input type="hidden" id="if_id">
+    <div class="row2">
+      <div class="field">
+        <label>이름 *</label>
+        <input type="text" id="if_name" placeholder="예: 이서준">
+      </div>
+      <div class="field">
+        <label>상태</label>
+        <select id="if_status">
+          <option value="상담중">상담중</option>
+          <option value="등록완료">등록완료</option>
+          <option value="보류">보류</option>
+          <option value="미등록">미등록</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>연락처</label>
+        <input type="text" id="if_phone" placeholder="010-0000-0000">
+      </div>
+      <div class="field">
+        <label>학부모 연락처</label>
+        <input type="text" id="if_pphone" placeholder="010-0000-0000">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>관심 반/레벨</label>
+        <input type="text" id="if_interested" placeholder="예: 초등 3반">
+      </div>
+      <div class="field">
+        <label>유입 경로</label>
+        <input type="text" id="if_source" placeholder="예: 지인소개, 전단지">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>상담일</label>
+        <input type="date" id="if_date">
+      </div>
+      <div class="field">
+        <label>상담자</label>
+        <input type="text" id="if_counselor" placeholder="예: 김원장">
+      </div>
+    </div>
+    <div class="field">
+      <label>상담 내용</label>
+      <textarea id="if_content" rows="2"></textarea>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>레벨테스트 결과</label>
+        <input type="text" id="if_leveltest" placeholder="예: Level 2 적합">
+      </div>
+      <div class="field">
+        <label>배정 반</label>
+        <input type="text" id="if_assigned" placeholder="예: 초등 3반">
+      </div>
+    </div>
+    <div class="field">
+      <label>다음 상담(예정)일</label>
+      <input type="date" id="if_nextdate">
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="if_memo" rows="2"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="inquiryCancelBtn">취소</button>
+      <button class="btn btn-primary" id="inquirySaveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 재원상담 추가/수정 모달 -->
+<div class="overlay" id="counselingOverlay">
+  <div class="modal">
+    <h2 id="counselingModalTitle">상담 추가</h2>
+    <input type="hidden" id="cf_id">
+    <div class="field">
+      <label>학생 *</label>
+      <select id="cf_student"></select>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>상담일</label>
+        <input type="date" id="cf_date">
+      </div>
+      <div class="field">
+        <label>방식</label>
+        <select id="cf_type">
+          <option value="전화">전화</option>
+          <option value="방문">방문</option>
+          <option value="문자/카톡">문자/카톡</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>상담자</label>
+      <input type="text" id="cf_counselor" placeholder="예: 김선생">
+    </div>
+    <div class="field">
+      <label>상담 내용</label>
+      <textarea id="cf_content" rows="3"></textarea>
+    </div>
+    <div class="field">
+      <label>다음 상담(예정)일</label>
+      <input type="date" id="cf_nextdate">
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="cf_memo" rows="2"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="counselingCancelBtn">취소</button>
+      <button class="btn btn-primary" id="counselingSaveBtn">저장</button>
     </div>
   </div>
 </div>
@@ -570,36 +738,70 @@
   const tabStudents = document.getElementById('tabStudents');
   const tabAttendance = document.getElementById('tabAttendance');
   const tabTuition = document.getElementById('tabTuition');
+  const tabCounseling = document.getElementById('tabCounseling');
   const studentsView = document.getElementById('studentsView');
   const attendanceView = document.getElementById('attendanceView');
   const tuitionView = document.getElementById('tuitionView');
+  const counselingView = document.getElementById('counselingView');
 
   function setActiveTab(activeBtn){
-    [tabStudents, tabAttendance, tabTuition].forEach(b => {
+    [tabStudents, tabAttendance, tabTuition, tabCounseling].forEach(b => {
       b.className = (b === activeBtn) ? 'btn btn-primary tabBtn' : 'btn btn-ghost tabBtn';
     });
   }
 
-  tabStudents.onclick = () => {
-    studentsView.style.display = 'block';
+  function hideAllViews(){
+    studentsView.style.display = 'none';
     attendanceView.style.display = 'none';
     tuitionView.style.display = 'none';
+    counselingView.style.display = 'none';
+  }
+
+  tabStudents.onclick = () => {
+    hideAllViews();
+    studentsView.style.display = 'block';
     setActiveTab(tabStudents);
   };
   tabAttendance.onclick = () => {
-    studentsView.style.display = 'none';
+    hideAllViews();
     attendanceView.style.display = 'block';
-    tuitionView.style.display = 'none';
     setActiveTab(tabAttendance);
     loadAttendance();
   };
   tabTuition.onclick = () => {
-    studentsView.style.display = 'none';
-    attendanceView.style.display = 'none';
+    hideAllViews();
     tuitionView.style.display = 'block';
     setActiveTab(tabTuition);
     loadTuition();
   };
+  tabCounseling.onclick = () => {
+    hideAllViews();
+    counselingView.style.display = 'block';
+    setActiveTab(tabCounseling);
+    loadInquiries();
+  };
+
+  // 상담관리 내부 서브탭 (신규상담 / 재원상담)
+  const subTabNewInquiry = document.getElementById('subTabNewInquiry');
+  const subTabCounseling = document.getElementById('subTabCounseling');
+  const newInquiryView = document.getElementById('newInquiryView');
+  const existingCounselingView = document.getElementById('existingCounselingView');
+
+  subTabNewInquiry.onclick = () => {
+    newInquiryView.style.display = 'block';
+    existingCounselingView.style.display = 'none';
+    subTabNewInquiry.className = 'btn btn-primary tabBtn';
+    subTabCounseling.className = 'btn btn-ghost tabBtn';
+    loadInquiries();
+  };
+  subTabCounseling.onclick = () => {
+    newInquiryView.style.display = 'none';
+    existingCounselingView.style.display = 'block';
+    subTabCounseling.className = 'btn btn-primary tabBtn';
+    subTabNewInquiry.className = 'btn btn-ghost tabBtn';
+    loadCounseling();
+  };
+
 
   // ====== 출결 관련 ======
   const attDateInput = document.getElementById('attDate');
@@ -870,6 +1072,251 @@
     tuitionArea.innerHTML = '';
     tuitionArea.appendChild(table);
   }
+
+  // ====== 신규상담(new_inquiry) 관련 ======
+  const inquiryOverlay = document.getElementById('inquiryOverlay');
+  const inquiryArea = document.getElementById('inquiryArea');
+  const inquirySearchInput = document.getElementById('inquirySearchInput');
+  const inquiryStatusFilter = document.getElementById('inquiryStatusFilter');
+  let inquiries = [];
+  let inquirySearch = '';
+  let inquiryFilterStatus = 'all';
+
+  function openInquiryModal(rec){
+    document.getElementById('inquiryModalTitle').textContent = rec ? '신규상담 수정' : '신규상담 추가';
+    document.getElementById('if_id').value = rec ? rec.id : '';
+    document.getElementById('if_name').value = rec?.name || '';
+    document.getElementById('if_status').value = rec?.status || '상담중';
+    document.getElementById('if_phone').value = rec?.phone || '';
+    document.getElementById('if_pphone').value = rec?.parent_phone || '';
+    document.getElementById('if_interested').value = rec?.interested_class || '';
+    document.getElementById('if_source').value = rec?.source || '';
+    document.getElementById('if_date').value = rec?.date || todayStr();
+    document.getElementById('if_counselor').value = rec?.counselor || '';
+    document.getElementById('if_content').value = rec?.content || '';
+    document.getElementById('if_leveltest').value = rec?.level_test_result || '';
+    document.getElementById('if_assigned').value = rec?.assigned_class || '';
+    document.getElementById('if_nextdate').value = rec?.next_date || '';
+    document.getElementById('if_memo').value = rec?.memo || '';
+    inquiryOverlay.classList.add('show');
+  }
+  function closeInquiryModal(){ inquiryOverlay.classList.remove('show'); }
+
+  document.getElementById('openInquiryAddBtn').onclick = () => openInquiryModal(null);
+  document.getElementById('inquiryCancelBtn').onclick = closeInquiryModal;
+  inquiryOverlay.addEventListener('click', (e) => { if(e.target === inquiryOverlay) closeInquiryModal(); });
+
+  document.getElementById('inquirySaveBtn').onclick = async () => {
+    const name = document.getElementById('if_name').value.trim();
+    if(!name){ showToast('이름을 입력해주세요'); return; }
+    const payload = {
+      name,
+      status: document.getElementById('if_status').value,
+      phone: document.getElementById('if_phone').value || null,
+      parent_phone: document.getElementById('if_pphone').value || null,
+      interested_class: document.getElementById('if_interested').value || null,
+      source: document.getElementById('if_source').value || null,
+      date: document.getElementById('if_date').value || null,
+      counselor: document.getElementById('if_counselor').value || null,
+      content: document.getElementById('if_content').value || null,
+      level_test_result: document.getElementById('if_leveltest').value || null,
+      assigned_class: document.getElementById('if_assigned').value || null,
+      next_date: document.getElementById('if_nextdate').value || null,
+      memo: document.getElementById('if_memo').value || null,
+    };
+    const editId = document.getElementById('if_id').value;
+    let error;
+    if(editId){
+      ({ error } = await sb.from('new_inquiry').update(payload).eq('id', editId));
+    } else {
+      ({ error } = await sb.from('new_inquiry').insert(payload));
+    }
+    if(error){ showToast('저장 실패: ' + error.message); return; }
+    showToast('저장됐어요');
+    closeInquiryModal();
+    loadInquiries();
+  };
+
+  async function deleteInquiry(id){
+    if(!confirm('이 상담 기록을 삭제할까요?')) return;
+    const { error } = await sb.from('new_inquiry').delete().eq('id', id);
+    if(error){ showToast('삭제 실패: ' + error.message); return; }
+    showToast('삭제됐어요');
+    loadInquiries();
+  }
+
+  async function loadInquiries(){
+    const { data, error } = await sb.from('new_inquiry').select('*').order('date', { ascending: false });
+    if(error){
+      inquiryArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    inquiries = data || [];
+    renderInquiries();
+  }
+
+  function renderInquiries(){
+    const filtered = inquiries.filter(r => {
+      const matchStatus = inquiryFilterStatus === 'all' || r.status === inquiryFilterStatus;
+      const matchSearch = !inquirySearch || r.name.toLowerCase().includes(inquirySearch.toLowerCase());
+      return matchStatus && matchSearch;
+    });
+    if(!filtered.length){
+      inquiryArea.innerHTML = `<div class="empty"><div class="big">📋</div>신규상담 기록이 없어요. [+ 신규상담 추가]로 시작해보세요.</div>`;
+      return;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr>
+      <th>이름</th><th>연락처</th><th>관심반</th><th>경로</th><th>상담일</th><th>상태</th><th>레벨테스트</th><th>배정반</th><th>관리</th>
+    </tr></thead>`;
+    const tb = document.createElement('tbody');
+    filtered.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="이름" class="name-cell">${escapeHtml(r.name)}</td>
+        <td data-label="연락처">${r.phone || '-'}</td>
+        <td data-label="관심반">${r.interested_class || '-'}</td>
+        <td data-label="경로">${r.source || '-'}</td>
+        <td data-label="상담일">${r.date || '-'}</td>
+        <td data-label="상태"><span class="badge ${r.status === '등록완료' ? 'on' : 'off'}">${r.status}</span></td>
+        <td data-label="레벨테스트">${r.level_test_result || '-'}</td>
+        <td data-label="배정반">${r.assigned_class || '-'}</td>
+        <td data-label="관리">
+          <button class="btn btn-ghost btn-sm editInquiryBtn">수정</button>
+          <button class="btn btn-danger btn-sm delInquiryBtn">삭제</button>
+        </td>
+      `;
+      tr.querySelector('.editInquiryBtn').onclick = () => openInquiryModal(r);
+      tr.querySelector('.delInquiryBtn').onclick = () => deleteInquiry(r.id);
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    inquiryArea.innerHTML = '';
+    inquiryArea.appendChild(table);
+  }
+
+  inquirySearchInput.addEventListener('input', (e) => { inquirySearch = e.target.value; renderInquiries(); });
+  inquiryStatusFilter.addEventListener('change', (e) => { inquiryFilterStatus = e.target.value; renderInquiries(); });
+
+  // ====== 재원상담(counseling) 관련 ======
+  const counselingOverlay = document.getElementById('counselingOverlay');
+  const counselingArea = document.getElementById('counselingArea');
+  const counselingStudentFilter = document.getElementById('counselingStudentFilter');
+  let counselingRecords = [];
+
+  function fillCounselingStudentSelects(){
+    const activeStudents = students.filter(s => s.status === '재원');
+    const options = activeStudents.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}</option>`).join('');
+    document.getElementById('cf_student').innerHTML = options;
+    const current = counselingStudentFilter.value;
+    counselingStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
+    if([...counselingStudentFilter.options].some(o => o.value === current)) counselingStudentFilter.value = current;
+  }
+
+  function openCounselingModal(rec){
+    fillCounselingStudentSelects();
+    document.getElementById('counselingModalTitle').textContent = rec ? '상담 수정' : '상담 추가';
+    document.getElementById('cf_id').value = rec ? rec.id : '';
+    document.getElementById('cf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
+    document.getElementById('cf_date').value = rec?.date || todayStr();
+    document.getElementById('cf_type').value = rec?.type || '전화';
+    document.getElementById('cf_counselor').value = rec?.counselor || '';
+    document.getElementById('cf_content').value = rec?.content || '';
+    document.getElementById('cf_nextdate').value = rec?.next_date || '';
+    document.getElementById('cf_memo').value = rec?.memo || '';
+    counselingOverlay.classList.add('show');
+  }
+  function closeCounselingModal(){ counselingOverlay.classList.remove('show'); }
+
+  document.getElementById('openCounselingAddBtn').onclick = () => openCounselingModal(null);
+  document.getElementById('counselingCancelBtn').onclick = closeCounselingModal;
+  counselingOverlay.addEventListener('click', (e) => { if(e.target === counselingOverlay) closeCounselingModal(); });
+
+  document.getElementById('counselingSaveBtn').onclick = async () => {
+    const studentId = document.getElementById('cf_student').value;
+    if(!studentId){ showToast('학생을 선택해주세요'); return; }
+    const payload = {
+      student_id: studentId,
+      date: document.getElementById('cf_date').value || todayStr(),
+      type: document.getElementById('cf_type').value,
+      counselor: document.getElementById('cf_counselor').value || null,
+      content: document.getElementById('cf_content').value || null,
+      next_date: document.getElementById('cf_nextdate').value || null,
+      memo: document.getElementById('cf_memo').value || null,
+    };
+    const editId = document.getElementById('cf_id').value;
+    let error;
+    if(editId){
+      ({ error } = await sb.from('counseling').update(payload).eq('id', editId));
+    } else {
+      ({ error } = await sb.from('counseling').insert(payload));
+    }
+    if(error){ showToast('저장 실패: ' + error.message); return; }
+    showToast('저장됐어요');
+    closeCounselingModal();
+    loadCounseling();
+  };
+
+  async function deleteCounseling(id){
+    if(!confirm('이 상담 기록을 삭제할까요?')) return;
+    const { error } = await sb.from('counseling').delete().eq('id', id);
+    if(error){ showToast('삭제 실패: ' + error.message); return; }
+    showToast('삭제됐어요');
+    loadCounseling();
+  }
+
+  async function loadCounseling(){
+    if(!students.length){
+      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
+      students = data || [];
+    }
+    fillCounselingStudentSelects();
+    const { data, error } = await sb.from('counseling').select('*').order('date', { ascending: false });
+    if(error){
+      counselingArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    counselingRecords = data || [];
+    renderCounseling();
+  }
+
+  function renderCounseling(){
+    const filterStudent = counselingStudentFilter.value;
+    const filtered = counselingRecords.filter(r => filterStudent === 'all' || r.student_id === filterStudent);
+    if(!filtered.length){
+      counselingArea.innerHTML = `<div class="empty"><div class="big">💬</div>상담 기록이 없어요. [+ 상담 추가]로 시작해보세요.</div>`;
+      return;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr>
+      <th>학생</th><th>상담일</th><th>방식</th><th>상담자</th><th>내용</th><th>다음상담</th><th>관리</th>
+    </tr></thead>`;
+    const tb = document.createElement('tbody');
+    filtered.forEach(r => {
+      const student = students.find(s => s.id === r.student_id);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
+        <td data-label="상담일">${r.date || '-'}</td>
+        <td data-label="방식">${r.type || '-'}</td>
+        <td data-label="상담자">${r.counselor || '-'}</td>
+        <td data-label="내용">${escapeHtml(r.content || '-')}</td>
+        <td data-label="다음상담">${r.next_date || '-'}</td>
+        <td data-label="관리">
+          <button class="btn btn-ghost btn-sm editCounselingBtn">수정</button>
+          <button class="btn btn-danger btn-sm delCounselingBtn">삭제</button>
+        </td>
+      `;
+      tr.querySelector('.editCounselingBtn').onclick = () => openCounselingModal(r);
+      tr.querySelector('.delCounselingBtn').onclick = () => deleteCounseling(r.id);
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    counselingArea.innerHTML = '';
+    counselingArea.appendChild(table);
+  }
+
+  counselingStudentFilter.addEventListener('change', renderCounseling);
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
