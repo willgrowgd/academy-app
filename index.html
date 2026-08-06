@@ -1571,6 +1571,32 @@
     renderGrades();
   }
 
+  function sendGradeSms(record, student){
+    if(!student || !student.parent_phone){
+      showToast('학부모 연락처가 등록되어 있지 않아요');
+      return;
+    }
+    // 같은 학생, 같은 시험일에 본 시험을 모두 모아서 한 번에 안내
+    const sameDay = gradeRecords.filter(r => r.student_id === record.student_id && r.exam_date === record.exam_date);
+
+    const dateLabel = record.exam_date ? record.exam_date.replace(/-/g, '.') : '';
+    let message = `[윌그로우공도국제캠퍼스]\n안녕하세요, ${student.name} 학생 학부모님.\n${dateLabel} 진행된 시험 결과를 안내드립니다.\n\n`;
+
+    sameDay.forEach(r => {
+      const scoreLabel = (r.score === null || r.score === undefined) ? '' : ` ${r.score}/${r.max_score ?? 100}점`;
+      const typeLabel = r.exam_type || '시험';
+      const rangeLabel = r.unit_range ? ` (${r.unit_range})` : '';
+      message += `· ${typeLabel}${rangeLabel}:${scoreLabel} - ${r.result}\n`;
+    });
+
+    message += `\n항상 관심 가져주셔서 감사합니다. 궁금하신 점 있으시면 언제든 연락 부탁드립니다.`;
+
+    const phone = student.parent_phone.replace(/[^0-9]/g, '');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? '&' : '?';
+    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
+  }
+
   function renderGrades(){
     const filterStudent = gradesStudentFilter.value;
     const filtered = gradeRecords.filter(r => filterStudent === 'all' || r.student_id === filterStudent);
@@ -1597,10 +1623,12 @@
         <td data-label="결과"><span class="badge ${r.result === '통과' ? 'on' : 'off'}">${r.result}</span></td>
         <td data-label="메모">${escapeHtml(r.memo || '-')}</td>
         <td data-label="관리">
+          <button class="btn btn-ghost btn-sm smsGradeBtn">💬 문자</button>
           <button class="btn btn-ghost btn-sm editGradeBtn">수정</button>
           <button class="btn btn-danger btn-sm delGradeBtn">삭제</button>
         </td>
       `;
+      tr.querySelector('.smsGradeBtn').onclick = () => sendGradeSms(r, student);
       tr.querySelector('.editGradeBtn').onclick = () => openGradeModal(r);
       tr.querySelector('.delGradeBtn').onclick = () => deleteGrade(r.id);
       tb.appendChild(tr);
