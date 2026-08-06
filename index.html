@@ -1023,6 +1023,25 @@
     renderTuition();
   }
 
+  function sendTuitionSms(record, student){
+    if(!student || !student.parent_phone){
+      showToast('학부모 연락처가 등록되어 있지 않아요');
+      return;
+    }
+    const monthLabel = record.month ? record.month.replace('-', '년 ') + '월' : '이번 달';
+    const amountLabel = Number(record.amount || 0).toLocaleString();
+    let message;
+    if(record.status === '납부완료'){
+      message = `[윌그로우공도국제캠퍼스] ${student.name} 학생 ${monthLabel} 학원비 ${amountLabel}원 납부 확인되었습니다. 감사합니다.`;
+    } else {
+      message = `[윌그로우공도국제캠퍼스] ${student.name} 학생 ${monthLabel} 학원비 ${amountLabel}원이 아직 미납입니다. 확인 부탁드립니다.`;
+    }
+    const phone = student.parent_phone.replace(/[^0-9]/g, '');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? '&' : '?';
+    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
+  }
+
   function renderTuition(){
     const filterStatus = tuitionStatusFilter.value;
     const filtered = tuitionRecords.filter(r => filterStatus === 'all' || r.status === filterStatus);
@@ -1059,11 +1078,13 @@
         <td data-label="수강기간">${period}</td>
         <td data-label="납부일">${r.paid_date || '-'}</td>
         <td data-label="관리">
+          <button class="btn btn-ghost btn-sm smsTuitionBtn">💬 문자</button>
           <button class="btn btn-ghost btn-sm editTuitionBtn">수정</button>
           <button class="btn btn-danger btn-sm delTuitionBtn">삭제</button>
         </td>
         <td data-label="메모">${escapeHtml(r.memo || '-')}</td>
       `;
+      tr.querySelector('.smsTuitionBtn').onclick = () => sendTuitionSms(r, student);
       tr.querySelector('.editTuitionBtn').onclick = () => openTuitionModal(r);
       tr.querySelector('.delTuitionBtn').onclick = () => deleteTuition(r.id);
       tb.appendChild(tr);
