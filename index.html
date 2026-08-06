@@ -279,7 +279,7 @@
           <option value="납부완료">납부완료</option>
         </select>
         <div style="margin-left:auto; display:flex; gap:10px;">
-          <button class="btn btn-ghost" id="genTuitionBtn">이번달 일괄생성</button>
+          <button class="btn btn-ghost" id="genTuitionBtn">선택한 달 일괄생성</button>
           <button class="btn btn-primary" id="openTuitionAddBtn">+ 학원비 추가</button>
         </div>
       </div>
@@ -1022,10 +1022,11 @@
 
   document.getElementById('openTuitionAddBtn').onclick = () => openTuitionModal(null);
   document.getElementById('genTuitionBtn').onclick = async () => {
-    if(!confirm('이번 달 학원비가 없는 재원생 전체에 대해 새로 생성할까요? (지난달 금액을 그대로 가져와요)')) return;
-    const { error } = await sb.rpc('generate_monthly_tuition');
+    const targetMonth = tuitionMonthInput.value;
+    if(!confirm(`${targetMonth} 학원비가 없는 재원생 전체에 대해 새로 생성할까요? (직전 달 금액을 그대로 가져와요)`)) return;
+    const { error } = await sb.rpc('generate_monthly_tuition', { target_month: targetMonth });
     if(error){ showToast('생성 실패: ' + error.message); return; }
-    showToast('이번달 학원비가 생성됐어요');
+    showToast(`${targetMonth} 학원비가 생성됐어요`);
     loadTuition();
   };
   document.getElementById('tuitionCancelBtn').onclick = closeTuitionModal;
