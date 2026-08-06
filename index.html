@@ -331,6 +331,9 @@
   <div id="gradesView" style="display:none;">
     <div class="panel">
       <div class="toolbar">
+        <select class="filter" id="gradesClassFilter">
+          <option value="all">전체 반</option>
+        </select>
         <select class="filter" id="gradesStudentFilter">
           <option value="all">전체 학생</option>
         </select>
@@ -1424,6 +1427,7 @@
   const gradeOverlay = document.getElementById('gradeOverlay');
   const gradesArea = document.getElementById('gradesArea');
   const gradesStudentFilter = document.getElementById('gradesStudentFilter');
+  const gradesClassFilter = document.getElementById('gradesClassFilter');
   let gradeRecords = [];
 
   function fillGradeStudentSelects(){
@@ -1433,6 +1437,12 @@
     const current = gradesStudentFilter.value;
     gradesStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
     if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
+
+    const classes = [...new Set(students.filter(s => s.class_name).map(s => s.class_name))];
+    const currentClass = gradesClassFilter.value;
+    gradesClassFilter.innerHTML = '<option value="all">전체 반</option>' +
+      classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    if(classes.includes(currentClass)) gradesClassFilter.value = currentClass;
   }
 
   function createExamRowHtml(data){
@@ -1599,7 +1609,13 @@
 
   function renderGrades(){
     const filterStudent = gradesStudentFilter.value;
-    const filtered = gradeRecords.filter(r => filterStudent === 'all' || r.student_id === filterStudent);
+    const filterClass = gradesClassFilter.value;
+    const filtered = gradeRecords.filter(r => {
+      const student = students.find(s => s.id === r.student_id);
+      const matchStudent = filterStudent === 'all' || r.student_id === filterStudent;
+      const matchClass = filterClass === 'all' || (student && student.class_name === filterClass);
+      return matchStudent && matchClass;
+    });
     if(!filtered.length){
       gradesArea.innerHTML = `<div class="empty"><div class="big">📝</div>성적 기록이 없어요. [+ 성적 추가]로 시작해보세요.</div>`;
       return;
@@ -1639,6 +1655,10 @@
   }
 
   gradesStudentFilter.addEventListener('change', renderGrades);
+  gradesClassFilter.addEventListener('change', () => {
+    gradesStudentFilter.value = 'all';
+    renderGrades();
+  });
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
