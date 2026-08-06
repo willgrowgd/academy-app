@@ -1014,7 +1014,7 @@
     document.getElementById('tf_method').value = rec?.payment_method || '';
     document.getElementById('tf_start').value = rec?.period_start || '';
     document.getElementById('tf_end').value = rec?.period_end || '';
-    document.getElementById('tf_paiddate').value = rec?.paid_date || '';
+    document.getElementById('tf_paiddate').value = rec ? (rec.paid_date || '') : todayStr();
     document.getElementById('tf_memo').value = rec?.memo || '';
     tuitionOverlay.classList.add('show');
   }
