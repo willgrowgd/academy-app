@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Willgrow GONGDO</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2F6F63">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <style>
   @font-face {
@@ -1176,6 +1180,23 @@
     renderInquiries();
   }
 
+  function sendInquirySms(record){
+    const targetPhone = record.phone || record.parent_phone;
+    if(!targetPhone){
+      showToast('연락처가 등록되어 있지 않아요');
+      return;
+    }
+    let message = `[윌그로우공도국제캠퍼스] 안녕하세요, ${record.name}님 상담 관련 안내드립니다.`;
+    if(record.interested_class){ message += ` 관심 반: ${record.interested_class}.`; }
+    if(record.next_date){ message += ` 다음 상담 예정일: ${record.next_date}.`; }
+    message += ' 문의사항 있으시면 언제든 연락 부탁드립니다.';
+
+    const phone = targetPhone.replace(/[^0-9]/g, '');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const separator = isIOS ? '&' : '?';
+    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
+  }
+
   function renderInquiries(){
     const filtered = inquiries.filter(r => {
       const matchStatus = inquiryFilterStatus === 'all' || r.status === inquiryFilterStatus;
@@ -1203,10 +1224,12 @@
         <td data-label="레벨테스트">${r.level_test_result || '-'}</td>
         <td data-label="배정반">${r.assigned_class || '-'}</td>
         <td data-label="관리">
+          <button class="btn btn-ghost btn-sm smsInquiryBtn">💬 문자</button>
           <button class="btn btn-ghost btn-sm editInquiryBtn">수정</button>
           <button class="btn btn-danger btn-sm delInquiryBtn">삭제</button>
         </td>
       `;
+      tr.querySelector('.smsInquiryBtn').onclick = () => sendInquirySms(r);
       tr.querySelector('.editInquiryBtn').onclick = () => openInquiryModal(r);
       tr.querySelector('.delInquiryBtn').onclick = () => deleteInquiry(r.id);
       tb.appendChild(tr);
