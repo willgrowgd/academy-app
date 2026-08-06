@@ -493,9 +493,15 @@
         <input type="text" id="gf_textbook" placeholder="예: Reading Adventure 2">
       </div>
     </div>
-    <div class="field">
-      <label>시험 범위 (아래 과목들에 공통 적용)</label>
-      <input type="text" id="gf_range" placeholder="예: Unit 5-6">
+    <div class="row2">
+      <div class="field">
+        <label>시험 범위 (아래 과목들에 공통 적용)</label>
+        <input type="text" id="gf_range" placeholder="예: Unit 5-6">
+      </div>
+      <div class="field">
+        <label>오늘 배운 내용</label>
+        <input type="text" id="gf_lessonmemo" placeholder="예: 과거시제 문법 설명, 관사 연습">
+      </div>
     </div>
 
     <div id="gf_examRows"></div>
@@ -1519,6 +1525,7 @@
     document.getElementById('gf_date').value = rec?.exam_date || todayStr();
     document.getElementById('gf_textbook').value = rec?.textbook || '';
     document.getElementById('gf_range').value = rec?.unit_range || '';
+    document.getElementById('gf_lessonmemo').value = rec?.lesson_memo || '';
 
     const container = document.getElementById('gf_examRows');
     container.innerHTML = createExamRowHtml(rec);
@@ -1555,6 +1562,7 @@
     const examDate = document.getElementById('gf_date').value || todayStr();
     const textbook = document.getElementById('gf_textbook').value || null;
     const unitRange = document.getElementById('gf_range').value || null;
+    const lessonMemo = document.getElementById('gf_lessonmemo').value || null;
     const editId = document.getElementById('gf_id').value;
 
     const blocks = [...document.querySelectorAll('#gf_examRows .examRowBlock')];
@@ -1563,6 +1571,7 @@
       exam_date: examDate,
       textbook: textbook,
       unit_range: unitRange,
+      lesson_memo: lessonMemo,
       exam_type: block.querySelector('.examType').value || null,
       score: block.querySelector('.examScore').value === '' ? null : Number(block.querySelector('.examScore').value),
       max_score: block.querySelector('.examMaxScore').value === '' ? 100 : Number(block.querySelector('.examMaxScore').value),
@@ -1614,8 +1623,13 @@
     const sameDay = gradeRecords.filter(r => r.student_id === record.student_id && r.exam_date === record.exam_date);
 
     const dateLabel = record.exam_date ? record.exam_date.replace(/-/g, '.') : '';
-    let message = `[윌그로우공도국제캠퍼스]\n안녕하세요, ${student.name} 학생 학부모님.\n${dateLabel} 진행된 시험 결과를 안내드립니다.\n\n`;
+    let message = `[윌그로우공도국제캠퍼스]\n안녕하세요, ${student.name} 학생 학부모님.\n${dateLabel} 수업 및 시험 결과를 안내드립니다.\n\n`;
 
+    if(record.lesson_memo){
+      message += `[오늘 배운 내용]\n${record.lesson_memo}\n\n`;
+    }
+
+    message += `[시험 결과]\n`;
     sameDay.forEach(r => {
       const scoreLabel = (r.score === null || r.score === undefined) ? '' : ` ${r.score}/${r.max_score ?? 100}점`;
       const typeLabel = r.exam_type || '시험';
@@ -1646,7 +1660,7 @@
     }
     const table = document.createElement('table');
     table.innerHTML = `<thead><tr>
-      <th>학생</th><th>시험일</th><th>교재</th><th>범위</th><th>시험종류</th><th>점수</th><th>결과</th><th>메모</th><th>관리</th>
+      <th>학생</th><th>시험일</th><th>교재</th><th>범위</th><th>배운내용</th><th>시험종류</th><th>점수</th><th>결과</th><th>메모</th><th>관리</th>
     </tr></thead>`;
     const tb = document.createElement('tbody');
     filtered.forEach(r => {
@@ -1658,6 +1672,7 @@
         <td data-label="시험일">${r.exam_date || '-'}</td>
         <td data-label="교재">${escapeHtml(r.textbook || '-')}</td>
         <td data-label="범위">${escapeHtml(r.unit_range || '-')}</td>
+        <td data-label="배운내용">${escapeHtml(r.lesson_memo || '-')}</td>
         <td data-label="시험종류">${escapeHtml(r.exam_type || '-')}</td>
         <td data-label="점수">${scoreLabel}</td>
         <td data-label="결과"><span class="badge ${r.result === '통과' ? 'on' : 'off'}">${r.result}</span></td>
