@@ -3,11 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Willgrow GONGDO</title>
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2F6F63">
+<title>학생 관리 - English Academy</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <style>
   @font-face {
@@ -170,7 +166,7 @@
 <!-- 로그인 화면 -->
 <div id="loginScreen" style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
   <div class="panel" style="max-width:380px; width:100%;">
-    <p class="brand-eyebrow">Willgrow GONGDO</p>
+    <p class="brand-eyebrow">Student Records</p>
     <h1 class="brand-title" style="margin-bottom:20px;">로그인</h1>
     <div class="field">
       <label>이메일</label>
@@ -189,8 +185,8 @@
 <div class="wrap" id="mainScreen" style="display:none;">
   <div class="top">
     <div>
-      <p class="brand-eyebrow">Willgrow GONGDO</p>
-      <h1 class="brand-title">윌그로우공도국제캠퍼스 관리시스템</h1>
+      <p class="brand-eyebrow">Student Records</p>
+      <h1 class="brand-title">학생 관리</h1>
       <p class="brand-sub">우리 학원 학생들의 기본 정보를 관리해요</p>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
@@ -202,9 +198,6 @@
   <div style="display:flex; gap:8px; margin-bottom:20px;">
     <button class="btn btn-primary tabBtn" id="tabStudents">학생 명단</button>
     <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
-    <button class="btn btn-ghost tabBtn" id="tabTuition">학원비 관리</button>
-    <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리</button>
-    <button class="btn btn-ghost tabBtn" id="tabGrades">성적 관리</button>
   </div>
 
   <div id="studentsView">
@@ -229,14 +222,13 @@
             <tr>
               <th>이름</th>
               <th>반</th>
-              <th>학년</th>
               <th>생년월일</th>
+              <th>성별</th>
               <th>학생 연락처</th>
               <th>학부모 연락처</th>
               <th>입학일</th>
               <th>상태</th>
               <th>관리</th>
-              <th>메모</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -261,320 +253,6 @@
         </select>
       </div>
       <div id="attArea"></div>
-      <p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;">💡 선택된 버튼(진한 초록색)을 다시 누르면 체크가 취소돼요.</p>
-    </div>
-  </div>
-
-  <div id="tuitionView" style="display:none;">
-    <div class="stat-row" id="tuitionStatRow"></div>
-    <div class="panel">
-      <div class="toolbar">
-        <div class="search" style="max-width:180px;">
-          <span>📅</span>
-          <input type="month" id="tuitionMonth">
-        </div>
-        <select class="filter" id="tuitionStatusFilter">
-          <option value="all">전체 상태</option>
-          <option value="미납">미납</option>
-          <option value="납부완료">납부완료</option>
-        </select>
-        <div class="search" style="max-width:200px;">
-          <span>🔎</span>
-          <input type="text" id="tuitionSearchInput" placeholder="이름으로 검색">
-        </div>
-        <div style="margin-left:auto; display:flex; gap:10px;">
-          <button class="btn btn-ghost" id="genTuitionBtn">선택한 달 일괄생성</button>
-          <button class="btn btn-primary" id="openTuitionAddBtn">+ 학원비 추가</button>
-        </div>
-      </div>
-      <div id="tuitionArea"></div>
-    </div>
-  </div>
-
-  <div id="counselingView" style="display:none;">
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <button class="btn btn-primary tabBtn" id="subTabNewInquiry">신규상담</button>
-      <button class="btn btn-ghost tabBtn" id="subTabCounseling">재원상담</button>
-    </div>
-
-    <!-- 신규상담 -->
-    <div id="newInquiryView">
-      <div class="panel">
-        <div class="toolbar">
-          <div class="search">
-            <span>🔎</span>
-            <input type="text" id="inquirySearchInput" placeholder="이름으로 검색">
-          </div>
-          <select class="filter" id="inquiryStatusFilter">
-            <option value="all">전체 상태</option>
-            <option value="상담중">상담중</option>
-            <option value="등록완료">등록완료</option>
-            <option value="보류">보류</option>
-            <option value="미등록">미등록</option>
-          </select>
-          <button class="btn btn-primary" id="openInquiryAddBtn" style="margin-left:auto;">+ 신규상담 추가</button>
-        </div>
-        <div id="inquiryArea"></div>
-      </div>
-    </div>
-
-    <!-- 재원상담 -->
-    <div id="existingCounselingView" style="display:none;">
-      <div class="panel">
-        <div class="toolbar">
-          <select class="filter" id="counselingStudentFilter">
-            <option value="all">전체 학생</option>
-          </select>
-          <button class="btn btn-primary" id="openCounselingAddBtn" style="margin-left:auto;">+ 상담 추가</button>
-        </div>
-        <div id="counselingArea"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="gradesView" style="display:none;">
-    <div class="panel">
-      <div class="toolbar">
-        <select class="filter" id="gradesStudentFilter">
-          <option value="all">전체 학생</option>
-        </select>
-        <select class="filter" id="gradesClassFilter">
-          <option value="all">전체 반</option>
-        </select>
-        <button class="btn btn-primary" id="openGradeAddBtn" style="margin-left:auto;">+ 성적 추가</button>
-      </div>
-      <div id="gradesArea"></div>
-    </div>
-  </div>
-</div>
-
-<!-- 신규상담 추가/수정 모달 -->
-<div class="overlay" id="inquiryOverlay">
-  <div class="modal">
-    <h2 id="inquiryModalTitle">신규상담 추가</h2>
-    <input type="hidden" id="if_id">
-    <div class="row2">
-      <div class="field">
-        <label>이름 *</label>
-        <input type="text" id="if_name" placeholder="예: 이서준">
-      </div>
-      <div class="field">
-        <label>상태</label>
-        <select id="if_status">
-          <option value="상담중">상담중</option>
-          <option value="등록완료">등록완료</option>
-          <option value="보류">보류</option>
-          <option value="미등록">미등록</option>
-        </select>
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>연락처</label>
-        <input type="text" id="if_phone" placeholder="010-0000-0000">
-      </div>
-      <div class="field">
-        <label>학부모 연락처</label>
-        <input type="text" id="if_pphone" placeholder="010-0000-0000">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>관심 반/레벨</label>
-        <input type="text" id="if_interested" placeholder="예: 초등 3반">
-      </div>
-      <div class="field">
-        <label>유입 경로</label>
-        <input type="text" id="if_source" placeholder="예: 지인소개, 전단지">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>상담일</label>
-        <input type="date" id="if_date">
-      </div>
-      <div class="field">
-        <label>상담자</label>
-        <input type="text" id="if_counselor" placeholder="예: 김원장">
-      </div>
-    </div>
-    <div class="field">
-      <label>상담 내용</label>
-      <textarea id="if_content" rows="2"></textarea>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>레벨테스트 결과</label>
-        <input type="text" id="if_leveltest" placeholder="예: Level 2 적합">
-      </div>
-      <div class="field">
-        <label>배정 반</label>
-        <input type="text" id="if_assigned" placeholder="예: 초등 3반">
-      </div>
-    </div>
-    <div class="field">
-      <label>다음 상담(예정)일</label>
-      <input type="date" id="if_nextdate">
-    </div>
-    <div class="field">
-      <label>메모</label>
-      <textarea id="if_memo" rows="2"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="inquiryCancelBtn">취소</button>
-      <button class="btn btn-primary" id="inquirySaveBtn">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 재원상담 추가/수정 모달 -->
-<div class="overlay" id="counselingOverlay">
-  <div class="modal">
-    <h2 id="counselingModalTitle">상담 추가</h2>
-    <input type="hidden" id="cf_id">
-    <div class="field">
-      <label>학생 *</label>
-      <select id="cf_student"></select>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>상담일</label>
-        <input type="date" id="cf_date">
-      </div>
-      <div class="field">
-        <label>방식</label>
-        <select id="cf_type">
-          <option value="전화">전화</option>
-          <option value="방문">방문</option>
-          <option value="문자/카톡">문자/카톡</option>
-          <option value="기타">기타</option>
-        </select>
-      </div>
-    </div>
-    <div class="field">
-      <label>상담자</label>
-      <input type="text" id="cf_counselor" placeholder="예: 김선생">
-    </div>
-    <div class="field">
-      <label>상담 내용</label>
-      <textarea id="cf_content" rows="3"></textarea>
-    </div>
-    <div class="field">
-      <label>다음 상담(예정)일</label>
-      <input type="date" id="cf_nextdate">
-    </div>
-    <div class="field">
-      <label>메모</label>
-      <textarea id="cf_memo" rows="2"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="counselingCancelBtn">취소</button>
-      <button class="btn btn-primary" id="counselingSaveBtn">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 성적 추가/수정 모달 -->
-<div class="overlay" id="gradeOverlay">
-  <div class="modal">
-    <h2 id="gradeModalTitle">성적 추가</h2>
-    <input type="hidden" id="gf_id">
-    <div class="field">
-      <label>학생 *</label>
-      <select id="gf_student"></select>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>시험일 (아래 과목들에 공통 적용)</label>
-        <input type="date" id="gf_date">
-      </div>
-      <div class="field">
-        <label>교재명 (아래 과목들에 공통 적용)</label>
-        <input type="text" id="gf_textbook" placeholder="예: Reading Adventure 2">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>시험 범위 (아래 과목들에 공통 적용)</label>
-        <input type="text" id="gf_range" placeholder="예: Unit 5-6">
-      </div>
-      <div class="field">
-        <label>오늘 배운 내용</label>
-        <input type="text" id="gf_lessonmemo" placeholder="예: 과거시제 문법 설명, 관사 연습">
-      </div>
-    </div>
-
-    <div id="gf_examRows"></div>
-
-    <button type="button" class="btn btn-ghost btn-sm" id="gf_addRowBtn" style="width:100%; justify-content:center; margin-bottom:16px;">+ 시험 한 과목 더 추가</button>
-
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="gradeCancelBtn">취소</button>
-      <button class="btn btn-primary" id="gradeSaveBtn">저장</button>
-    </div>
-  </div>
-</div>
-
-<!-- 학원비 추가/수정 모달 -->
-<div class="overlay" id="tuitionOverlay">
-  <div class="modal">
-    <h2 id="tuitionModalTitle">학원비 추가</h2>
-    <input type="hidden" id="tf_id">
-    <div class="field">
-      <label>학생 *</label>
-      <select id="tf_student"></select>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>해당 월 *</label>
-        <input type="month" id="tf_month">
-      </div>
-      <div class="field">
-        <label>금액</label>
-        <input type="number" id="tf_amount" placeholder="예: 300000">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>상태</label>
-        <select id="tf_status">
-          <option value="미납">미납</option>
-          <option value="납부완료">납부완료</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>결제수단</label>
-        <input type="text" id="tf_method" list="tf_method_list" placeholder="예: 카드(삼성), 현금, 계좌이체">
-        <datalist id="tf_method_list">
-          <option value="카드(삼성)">
-          <option value="카드(현대)">
-          <option value="카드(국민)">
-          <option value="현금">
-          <option value="계좌이체">
-        </datalist>
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>수강 시작일</label>
-        <input type="date" id="tf_start">
-      </div>
-      <div class="field">
-        <label>수강 종료일</label>
-        <input type="date" id="tf_end">
-      </div>
-    </div>
-    <div class="field">
-      <label>납부일</label>
-      <input type="date" id="tf_paiddate">
-    </div>
-    <div class="field">
-      <label>메모</label>
-      <textarea id="tf_memo" rows="2"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="tuitionCancelBtn">취소</button>
-      <button class="btn btn-primary" id="tuitionSaveBtn">저장</button>
     </div>
   </div>
 </div>
@@ -594,8 +272,12 @@
         <input type="date" id="f_birth">
       </div>
       <div class="field">
-        <label>학년</label>
-        <input type="text" id="f_grade" placeholder="예: 초등 3학년">
+        <label>성별</label>
+        <select id="f_gender">
+          <option value="">선택 안 함</option>
+          <option value="남">남</option>
+          <option value="여">여</option>
+        </select>
       </div>
     </div>
     <div class="row2">
@@ -673,7 +355,7 @@
     document.getElementById('editId').value = student ? student.id : '';
     document.getElementById('f_name').value = student?.name || '';
     document.getElementById('f_birth').value = student?.birth_date || '';
-    document.getElementById('f_grade').value = student?.grade || '';
+    document.getElementById('f_gender').value = student?.gender || '';
     document.getElementById('f_class').value = student?.class_name || '';
     document.getElementById('f_status').value = student?.status || '재원';
     document.getElementById('f_sphone').value = student?.student_phone || '';
@@ -695,7 +377,7 @@
     const payload = {
       name,
       birth_date: document.getElementById('f_birth').value || null,
-      grade: document.getElementById('f_grade').value || null,
+      gender: document.getElementById('f_gender').value || null,
       class_name: document.getElementById('f_class').value || null,
       status: document.getElementById('f_status').value,
       student_phone: document.getElementById('f_sphone').value || null,
@@ -741,8 +423,8 @@
       tr.innerHTML = `
         <td data-label="이름" class="name-cell">${escapeHtml(s.name)}</td>
         <td data-label="반">${escapeHtml(s.class_name || '-')}</td>
-        <td data-label="학년">${escapeHtml(s.grade || '-')}</td>
         <td data-label="생년월일">${s.birth_date || '-'}</td>
+        <td data-label="성별">${s.gender || '-'}</td>
         <td data-label="학생 연락처">${s.student_phone || '-'}</td>
         <td data-label="학부모 연락처">${s.parent_phone || '-'}</td>
         <td data-label="입학일">${s.enrollment_date || '-'}</td>
@@ -751,7 +433,6 @@
           <button class="btn btn-ghost btn-sm editBtn">수정</button>
           <button class="btn btn-danger btn-sm delBtn">삭제</button>
         </td>
-        <td data-label="메모">${escapeHtml(s.memo || '-')}</td>
       `;
       tr.querySelector('.editBtn').onclick = () => openModal(s);
       tr.querySelector('.delBtn').onclick = () => deleteStudent(s.id, s.name);
@@ -801,80 +482,22 @@
   // ====== 탭 전환 ======
   const tabStudents = document.getElementById('tabStudents');
   const tabAttendance = document.getElementById('tabAttendance');
-  const tabTuition = document.getElementById('tabTuition');
-  const tabCounseling = document.getElementById('tabCounseling');
-  const tabGrades = document.getElementById('tabGrades');
   const studentsView = document.getElementById('studentsView');
   const attendanceView = document.getElementById('attendanceView');
-  const tuitionView = document.getElementById('tuitionView');
-  const counselingView = document.getElementById('counselingView');
-  const gradesView = document.getElementById('gradesView');
-
-  function setActiveTab(activeBtn){
-    [tabStudents, tabAttendance, tabTuition, tabCounseling, tabGrades].forEach(b => {
-      b.className = (b === activeBtn) ? 'btn btn-primary tabBtn' : 'btn btn-ghost tabBtn';
-    });
-  }
-
-  function hideAllViews(){
-    studentsView.style.display = 'none';
-    attendanceView.style.display = 'none';
-    tuitionView.style.display = 'none';
-    counselingView.style.display = 'none';
-    gradesView.style.display = 'none';
-  }
 
   tabStudents.onclick = () => {
-    hideAllViews();
     studentsView.style.display = 'block';
-    setActiveTab(tabStudents);
+    attendanceView.style.display = 'none';
+    tabStudents.className = 'btn btn-primary tabBtn';
+    tabAttendance.className = 'btn btn-ghost tabBtn';
   };
   tabAttendance.onclick = () => {
-    hideAllViews();
+    studentsView.style.display = 'none';
     attendanceView.style.display = 'block';
-    setActiveTab(tabAttendance);
+    tabAttendance.className = 'btn btn-primary tabBtn';
+    tabStudents.className = 'btn btn-ghost tabBtn';
     loadAttendance();
   };
-  tabTuition.onclick = () => {
-    hideAllViews();
-    tuitionView.style.display = 'block';
-    setActiveTab(tabTuition);
-    loadTuition();
-  };
-  tabCounseling.onclick = () => {
-    hideAllViews();
-    counselingView.style.display = 'block';
-    setActiveTab(tabCounseling);
-    loadInquiries();
-  };
-  tabGrades.onclick = () => {
-    hideAllViews();
-    gradesView.style.display = 'block';
-    setActiveTab(tabGrades);
-    loadGrades();
-  };
-
-  // 상담관리 내부 서브탭 (신규상담 / 재원상담)
-  const subTabNewInquiry = document.getElementById('subTabNewInquiry');
-  const subTabCounseling = document.getElementById('subTabCounseling');
-  const newInquiryView = document.getElementById('newInquiryView');
-  const existingCounselingView = document.getElementById('existingCounselingView');
-
-  subTabNewInquiry.onclick = () => {
-    newInquiryView.style.display = 'block';
-    existingCounselingView.style.display = 'none';
-    subTabNewInquiry.className = 'btn btn-primary tabBtn';
-    subTabCounseling.className = 'btn btn-ghost tabBtn';
-    loadInquiries();
-  };
-  subTabCounseling.onclick = () => {
-    newInquiryView.style.display = 'none';
-    existingCounselingView.style.display = 'block';
-    subTabCounseling.className = 'btn btn-primary tabBtn';
-    subTabNewInquiry.className = 'btn btn-ghost tabBtn';
-    loadCounseling();
-  };
-
 
   // ====== 출결 관련 ======
   const attDateInput = document.getElementById('attDate');
@@ -929,7 +552,7 @@
 
     attArea.innerHTML = '';
     const table = document.createElement('table');
-    table.innerHTML = `<thead><tr><th>이름</th><th>반</th><th>출결 상태</th><th>사유/메모</th></tr></thead>`;
+    table.innerHTML = `<thead><tr><th>이름</th><th>반</th><th>출결 상태</th></tr></thead>`;
     const tb = document.createElement('tbody');
 
     active.forEach(s => {
@@ -943,22 +566,9 @@
         <td data-label="이름" class="name-cell">${escapeHtml(s.name)}</td>
         <td data-label="반">${escapeHtml(s.class_name || '-')}</td>
         <td data-label="출결 상태">${btns}</td>
-        <td data-label="사유/메모"><input type="text" class="attMemoInput" placeholder="예: 몸살로 결석" value="${escapeHtml(rec?.memo || '')}" style="width:100%; font-family:inherit; font-size:13.5px; padding:7px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg);"></td>
       `;
       tr.querySelectorAll('.attStatusBtn').forEach(btn => {
-        btn.onclick = () => {
-          const already = rec && rec.status === btn.dataset.status;
-          const memoVal = tr.querySelector('.attMemoInput').value;
-          if(already){
-            clearAttendance(s.id);
-          } else {
-            setAttendance(s.id, btn.dataset.status, memoVal);
-          }
-        };
-      });
-      tr.querySelector('.attMemoInput').addEventListener('blur', (e) => {
-        const status = (attRecords[s.id] && attRecords[s.id].status) || '출석';
-        setAttendance(s.id, status, e.target.value, true);
+        btn.onclick = () => setAttendance(s.id, btn.dataset.status);
       });
       tb.appendChild(tr);
     });
@@ -966,738 +576,16 @@
     attArea.appendChild(table);
   }
 
-  async function setAttendance(studentId, status, memo, isMemoOnlySave){
+  async function setAttendance(studentId, status){
     const date = attDateInput.value;
-    const payload = { student_id: studentId, date, status };
-    if(memo !== undefined) payload.memo = memo || null;
     const { data, error } = await sb.from('attendance')
-      .upsert(payload, { onConflict: 'student_id,date' })
+      .upsert({ student_id: studentId, date, status }, { onConflict: 'student_id,date' })
       .select();
     if(error){ showToast('출결 저장 실패: ' + error.message); return; }
     if(data && data[0]) attRecords[studentId] = data[0];
-    if(isMemoOnlySave){
-      showToast('메모가 저장됐어요');
-    } else {
-      renderAttendance();
-      showToast(`${status} 처리됐어요`);
-    }
-  }
-
-  async function clearAttendance(studentId){
-    const date = attDateInput.value;
-    const { error } = await sb.from('attendance').delete().eq('student_id', studentId).eq('date', date);
-    if(error){ showToast('초기화 실패: ' + error.message); return; }
-    delete attRecords[studentId];
     renderAttendance();
-    showToast('체크가 지워졌어요');
+    showToast(`${status} 처리됐어요`);
   }
-
-  // ====== 학원비 관련 ======
-  const tuitionOverlay = document.getElementById('tuitionOverlay');
-  const tuitionMonthInput = document.getElementById('tuitionMonth');
-  const tuitionStatusFilter = document.getElementById('tuitionStatusFilter');
-  const tuitionSearchInput = document.getElementById('tuitionSearchInput');
-  const tuitionArea = document.getElementById('tuitionArea');
-  const tuitionStatRow = document.getElementById('tuitionStatRow');
-  let tuitionRecords = [];
-  let tuitionSearch = '';
-
-  function currentMonthStr(){
-    const d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-  }
-  tuitionMonthInput.value = currentMonthStr();
-  tuitionMonthInput.addEventListener('change', loadTuition);
-  tuitionStatusFilter.addEventListener('change', renderTuition);
-  tuitionSearchInput.addEventListener('input', (e) => { tuitionSearch = e.target.value; renderTuition(); });
-
-  function fillStudentSelect(){
-    const sel = document.getElementById('tf_student');
-    const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    sel.innerHTML = sorted
-      .map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`)
-      .join('');
-  }
-
-  function openTuitionModal(rec){
-    fillStudentSelect();
-    document.getElementById('tuitionModalTitle').textContent = rec ? '학원비 수정' : '학원비 추가';
-    document.getElementById('tf_id').value = rec ? rec.id : '';
-    document.getElementById('tf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
-    document.getElementById('tf_month').value = rec ? rec.month : tuitionMonthInput.value;
-    document.getElementById('tf_amount').value = rec ? rec.amount : '';
-    document.getElementById('tf_status').value = rec ? rec.status : '미납';
-    document.getElementById('tf_method').value = rec?.payment_method || '';
-    document.getElementById('tf_start').value = rec?.period_start || '';
-    document.getElementById('tf_end').value = rec?.period_end || '';
-    document.getElementById('tf_paiddate').value = rec ? (rec.paid_date || '') : todayStr();
-    document.getElementById('tf_memo').value = rec?.memo || '';
-    tuitionOverlay.classList.add('show');
-  }
-  function closeTuitionModal(){ tuitionOverlay.classList.remove('show'); }
-
-  document.getElementById('openTuitionAddBtn').onclick = () => openTuitionModal(null);
-  document.getElementById('genTuitionBtn').onclick = async () => {
-    const targetMonth = tuitionMonthInput.value;
-    if(!confirm(`${targetMonth} 학원비가 없는 재원생 전체에 대해 새로 생성할까요? (직전 달 금액을 그대로 가져와요)`)) return;
-    const { error } = await sb.rpc('generate_monthly_tuition', { target_month: targetMonth });
-    if(error){ showToast('생성 실패: ' + error.message); return; }
-    showToast(`${targetMonth} 학원비가 생성됐어요`);
-    loadTuition();
-  };
-  document.getElementById('tuitionCancelBtn').onclick = closeTuitionModal;
-  tuitionOverlay.addEventListener('click', (e) => { if(e.target === tuitionOverlay) closeTuitionModal(); });
-
-  document.getElementById('tuitionSaveBtn').onclick = async () => {
-    const studentId = document.getElementById('tf_student').value;
-    const month = document.getElementById('tf_month').value;
-    if(!studentId || !month){ showToast('학생과 해당 월을 선택해주세요'); return; }
-
-    const payload = {
-      student_id: studentId,
-      month,
-      amount: Number(document.getElementById('tf_amount').value) || 0,
-      status: document.getElementById('tf_status').value,
-      payment_method: document.getElementById('tf_method').value || null,
-      period_start: document.getElementById('tf_start').value || null,
-      period_end: document.getElementById('tf_end').value || null,
-      paid_date: document.getElementById('tf_paiddate').value || null,
-      memo: document.getElementById('tf_memo').value || null,
-    };
-
-    const editId = document.getElementById('tf_id').value;
-    let error;
-    if(editId){
-      ({ error } = await sb.from('tuition').update(payload).eq('id', editId));
-    } else {
-      ({ error } = await sb.from('tuition').upsert(payload, { onConflict: 'student_id,month' }));
-    }
-    if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast('저장됐어요');
-    closeTuitionModal();
-    loadTuition();
-  };
-
-  async function deleteTuition(id){
-    if(!confirm('이 학원비 기록을 삭제할까요?')) return;
-    const { error } = await sb.from('tuition').delete().eq('id', id);
-    if(error){ showToast('삭제 실패: ' + error.message); return; }
-    showToast('삭제됐어요');
-    loadTuition();
-  }
-
-  async function loadTuition(){
-    if(!students.length){
-      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
-      students = data || [];
-    }
-    const month = tuitionMonthInput.value;
-    const { data, error } = await sb.from('tuition').select('*').eq('month', month);
-    if(error){
-      tuitionArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>학원비 정보를 불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
-      return;
-    }
-    tuitionRecords = data || [];
-    renderTuition();
-  }
-
-  function sendTuitionSms(record, student){
-    if(!student || !student.parent_phone){
-      showToast('학부모 연락처가 등록되어 있지 않아요');
-      return;
-    }
-    const monthLabel = record.month ? record.month.replace('-', '년 ') + '월' : '이번 달';
-    const amountLabel = Number(record.amount || 0).toLocaleString();
-    let message;
-    if(record.status === '납부완료'){
-      message = `[윌그로우공도국제캠퍼스] ${student.name} 학생 ${monthLabel} 학원비 ${amountLabel}원 납부 확인되었습니다. 감사합니다.`;
-    } else {
-      message = `[윌그로우공도국제캠퍼스] ${student.name} 학생 ${monthLabel} 학원비 ${amountLabel}원이 아직 미납입니다. 확인 부탁드립니다.`;
-    }
-    const phone = student.parent_phone.replace(/[^0-9]/g, '');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const separator = isIOS ? '&' : '?';
-    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
-  }
-
-  function renderTuition(){
-    const filterStatus = tuitionStatusFilter.value;
-    const filtered = tuitionRecords.filter(r => {
-      const matchStatus = filterStatus === 'all' || r.status === filterStatus;
-      if(!matchStatus) return false;
-      if(!tuitionSearch) return true;
-      const student = students.find(s => s.id === r.student_id);
-      return student && student.name.toLowerCase().includes(tuitionSearch.toLowerCase());
-    });
-
-    const paidCount = tuitionRecords.filter(r => r.status === '납부완료').length;
-    const unpaidCount = tuitionRecords.filter(r => r.status === '미납').length;
-    const totalAmount = tuitionRecords.filter(r => r.status === '납부완료').reduce((sum,r) => sum + Number(r.amount||0), 0);
-    tuitionStatRow.innerHTML = `
-      <div class="stat"><div class="num">${paidCount}</div><div class="label">납부완료</div></div>
-      <div class="stat"><div class="num">${unpaidCount}</div><div class="label">미납</div></div>
-      <div class="stat"><div class="num">${totalAmount.toLocaleString()}원</div><div class="label">이번달 수납액</div></div>
-    `;
-
-    if(!filtered.length){
-      tuitionArea.innerHTML = `<div class="empty"><div class="big">💳</div>해당 월의 학원비 기록이 없어요. [+ 학원비 추가]로 등록해보세요.</div>`;
-      return;
-    }
-
-    const table = document.createElement('table');
-    table.innerHTML = `<thead><tr>
-      <th>학생</th><th>금액</th><th>상태</th><th>결제수단</th><th>수강기간</th><th>납부일</th><th>관리</th><th>메모</th>
-    </tr></thead>`;
-    const tb = document.createElement('tbody');
-
-    filtered.forEach(r => {
-      const student = students.find(s => s.id === r.student_id);
-      const period = (r.period_start || r.period_end) ? `${r.period_start||'-'} ~ ${r.period_end||'-'}` : '-';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
-        <td data-label="금액">${Number(r.amount||0).toLocaleString()}원</td>
-        <td data-label="상태"><span class="badge ${r.status === '납부완료' ? 'on' : 'off'}">${r.status}</span></td>
-        <td data-label="결제수단">${r.payment_method || '-'}</td>
-        <td data-label="수강기간">${period}</td>
-        <td data-label="납부일">${r.paid_date || '-'}</td>
-        <td data-label="관리">
-          <button class="btn btn-ghost btn-sm smsTuitionBtn">💬 문자</button>
-          <button class="btn btn-ghost btn-sm editTuitionBtn">수정</button>
-          <button class="btn btn-danger btn-sm delTuitionBtn">삭제</button>
-        </td>
-        <td data-label="메모">${escapeHtml(r.memo || '-')}</td>
-      `;
-      tr.querySelector('.smsTuitionBtn').onclick = () => sendTuitionSms(r, student);
-      tr.querySelector('.editTuitionBtn').onclick = () => openTuitionModal(r);
-      tr.querySelector('.delTuitionBtn').onclick = () => deleteTuition(r.id);
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb);
-    tuitionArea.innerHTML = '';
-    tuitionArea.appendChild(table);
-  }
-
-  // ====== 신규상담(new_inquiry) 관련 ======
-  const inquiryOverlay = document.getElementById('inquiryOverlay');
-  const inquiryArea = document.getElementById('inquiryArea');
-  const inquirySearchInput = document.getElementById('inquirySearchInput');
-  const inquiryStatusFilter = document.getElementById('inquiryStatusFilter');
-  let inquiries = [];
-  let inquirySearch = '';
-  let inquiryFilterStatus = 'all';
-
-  function openInquiryModal(rec){
-    document.getElementById('inquiryModalTitle').textContent = rec ? '신규상담 수정' : '신규상담 추가';
-    document.getElementById('if_id').value = rec ? rec.id : '';
-    document.getElementById('if_name').value = rec?.name || '';
-    document.getElementById('if_status').value = rec?.status || '상담중';
-    document.getElementById('if_phone').value = rec?.phone || '';
-    document.getElementById('if_pphone').value = rec?.parent_phone || '';
-    document.getElementById('if_interested').value = rec?.interested_class || '';
-    document.getElementById('if_source').value = rec?.source || '';
-    document.getElementById('if_date').value = rec?.date || todayStr();
-    document.getElementById('if_counselor').value = rec?.counselor || '';
-    document.getElementById('if_content').value = rec?.content || '';
-    document.getElementById('if_leveltest').value = rec?.level_test_result || '';
-    document.getElementById('if_assigned').value = rec?.assigned_class || '';
-    document.getElementById('if_nextdate').value = rec?.next_date || '';
-    document.getElementById('if_memo').value = rec?.memo || '';
-    inquiryOverlay.classList.add('show');
-  }
-  function closeInquiryModal(){ inquiryOverlay.classList.remove('show'); }
-
-  document.getElementById('openInquiryAddBtn').onclick = () => openInquiryModal(null);
-  document.getElementById('inquiryCancelBtn').onclick = closeInquiryModal;
-  inquiryOverlay.addEventListener('click', (e) => { if(e.target === inquiryOverlay) closeInquiryModal(); });
-
-  document.getElementById('inquirySaveBtn').onclick = async () => {
-    const name = document.getElementById('if_name').value.trim();
-    if(!name){ showToast('이름을 입력해주세요'); return; }
-    const payload = {
-      name,
-      status: document.getElementById('if_status').value,
-      phone: document.getElementById('if_phone').value || null,
-      parent_phone: document.getElementById('if_pphone').value || null,
-      interested_class: document.getElementById('if_interested').value || null,
-      source: document.getElementById('if_source').value || null,
-      date: document.getElementById('if_date').value || null,
-      counselor: document.getElementById('if_counselor').value || null,
-      content: document.getElementById('if_content').value || null,
-      level_test_result: document.getElementById('if_leveltest').value || null,
-      assigned_class: document.getElementById('if_assigned').value || null,
-      next_date: document.getElementById('if_nextdate').value || null,
-      memo: document.getElementById('if_memo').value || null,
-    };
-    const editId = document.getElementById('if_id').value;
-    let error;
-    if(editId){
-      ({ error } = await sb.from('new_inquiry').update(payload).eq('id', editId));
-    } else {
-      ({ error } = await sb.from('new_inquiry').insert(payload));
-    }
-    if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast('저장됐어요');
-    closeInquiryModal();
-    loadInquiries();
-  };
-
-  async function deleteInquiry(id){
-    if(!confirm('이 상담 기록을 삭제할까요?')) return;
-    const { error } = await sb.from('new_inquiry').delete().eq('id', id);
-    if(error){ showToast('삭제 실패: ' + error.message); return; }
-    showToast('삭제됐어요');
-    loadInquiries();
-  }
-
-  async function loadInquiries(){
-    const { data, error } = await sb.from('new_inquiry').select('*').order('date', { ascending: false });
-    if(error){
-      inquiryArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
-      return;
-    }
-    inquiries = data || [];
-    renderInquiries();
-  }
-
-  function sendInquirySms(record){
-    const targetPhone = record.phone || record.parent_phone;
-    if(!targetPhone){
-      showToast('연락처가 등록되어 있지 않아요');
-      return;
-    }
-    let message = `[윌그로우공도국제캠퍼스] 안녕하세요, ${record.name}님 상담 관련 안내드립니다.`;
-    if(record.interested_class){ message += ` 관심 반: ${record.interested_class}.`; }
-    if(record.next_date){ message += ` 다음 상담 예정일: ${record.next_date}.`; }
-    message += ' 문의사항 있으시면 언제든 연락 부탁드립니다.';
-
-    const phone = targetPhone.replace(/[^0-9]/g, '');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const separator = isIOS ? '&' : '?';
-    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
-  }
-
-  function renderInquiries(){
-    const filtered = inquiries.filter(r => {
-      const matchStatus = inquiryFilterStatus === 'all' || r.status === inquiryFilterStatus;
-      const matchSearch = !inquirySearch || r.name.toLowerCase().includes(inquirySearch.toLowerCase());
-      return matchStatus && matchSearch;
-    });
-    if(!filtered.length){
-      inquiryArea.innerHTML = `<div class="empty"><div class="big">📋</div>신규상담 기록이 없어요. [+ 신규상담 추가]로 시작해보세요.</div>`;
-      return;
-    }
-    const table = document.createElement('table');
-    table.innerHTML = `<thead><tr>
-      <th>이름</th><th>연락처</th><th>관심반</th><th>경로</th><th>상담일</th><th>상태</th><th>레벨테스트</th><th>배정반</th><th>관리</th>
-    </tr></thead>`;
-    const tb = document.createElement('tbody');
-    filtered.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td data-label="이름" class="name-cell">${escapeHtml(r.name)}</td>
-        <td data-label="연락처">${r.phone || '-'}</td>
-        <td data-label="관심반">${r.interested_class || '-'}</td>
-        <td data-label="경로">${r.source || '-'}</td>
-        <td data-label="상담일">${r.date || '-'}</td>
-        <td data-label="상태"><span class="badge ${r.status === '등록완료' ? 'on' : 'off'}">${r.status}</span></td>
-        <td data-label="레벨테스트">${r.level_test_result || '-'}</td>
-        <td data-label="배정반">${r.assigned_class || '-'}</td>
-        <td data-label="관리">
-          <button class="btn btn-ghost btn-sm smsInquiryBtn">💬 문자</button>
-          <button class="btn btn-ghost btn-sm editInquiryBtn">수정</button>
-          <button class="btn btn-danger btn-sm delInquiryBtn">삭제</button>
-        </td>
-      `;
-      tr.querySelector('.smsInquiryBtn').onclick = () => sendInquirySms(r);
-      tr.querySelector('.editInquiryBtn').onclick = () => openInquiryModal(r);
-      tr.querySelector('.delInquiryBtn').onclick = () => deleteInquiry(r.id);
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb);
-    inquiryArea.innerHTML = '';
-    inquiryArea.appendChild(table);
-  }
-
-  inquirySearchInput.addEventListener('input', (e) => { inquirySearch = e.target.value; renderInquiries(); });
-  inquiryStatusFilter.addEventListener('change', (e) => { inquiryFilterStatus = e.target.value; renderInquiries(); });
-
-  // ====== 재원상담(counseling) 관련 ======
-  const counselingOverlay = document.getElementById('counselingOverlay');
-  const counselingArea = document.getElementById('counselingArea');
-  const counselingStudentFilter = document.getElementById('counselingStudentFilter');
-  let counselingRecords = [];
-
-  function fillCounselingStudentSelects(){
-    const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
-    document.getElementById('cf_student').innerHTML = options;
-    const current = counselingStudentFilter.value;
-    counselingStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
-    if([...counselingStudentFilter.options].some(o => o.value === current)) counselingStudentFilter.value = current;
-  }
-
-  function openCounselingModal(rec){
-    fillCounselingStudentSelects();
-    document.getElementById('counselingModalTitle').textContent = rec ? '상담 수정' : '상담 추가';
-    document.getElementById('cf_id').value = rec ? rec.id : '';
-    document.getElementById('cf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
-    document.getElementById('cf_date').value = rec?.date || todayStr();
-    document.getElementById('cf_type').value = rec?.type || '전화';
-    document.getElementById('cf_counselor').value = rec?.counselor || '';
-    document.getElementById('cf_content').value = rec?.content || '';
-    document.getElementById('cf_nextdate').value = rec?.next_date || '';
-    document.getElementById('cf_memo').value = rec?.memo || '';
-    counselingOverlay.classList.add('show');
-  }
-  function closeCounselingModal(){ counselingOverlay.classList.remove('show'); }
-
-  document.getElementById('openCounselingAddBtn').onclick = () => openCounselingModal(null);
-  document.getElementById('counselingCancelBtn').onclick = closeCounselingModal;
-  counselingOverlay.addEventListener('click', (e) => { if(e.target === counselingOverlay) closeCounselingModal(); });
-
-  document.getElementById('counselingSaveBtn').onclick = async () => {
-    const studentId = document.getElementById('cf_student').value;
-    if(!studentId){ showToast('학생을 선택해주세요'); return; }
-    const payload = {
-      student_id: studentId,
-      date: document.getElementById('cf_date').value || todayStr(),
-      type: document.getElementById('cf_type').value,
-      counselor: document.getElementById('cf_counselor').value || null,
-      content: document.getElementById('cf_content').value || null,
-      next_date: document.getElementById('cf_nextdate').value || null,
-      memo: document.getElementById('cf_memo').value || null,
-    };
-    const editId = document.getElementById('cf_id').value;
-    let error;
-    if(editId){
-      ({ error } = await sb.from('counseling').update(payload).eq('id', editId));
-    } else {
-      ({ error } = await sb.from('counseling').insert(payload));
-    }
-    if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast('저장됐어요');
-    closeCounselingModal();
-    loadCounseling();
-  };
-
-  async function deleteCounseling(id){
-    if(!confirm('이 상담 기록을 삭제할까요?')) return;
-    const { error } = await sb.from('counseling').delete().eq('id', id);
-    if(error){ showToast('삭제 실패: ' + error.message); return; }
-    showToast('삭제됐어요');
-    loadCounseling();
-  }
-
-  async function loadCounseling(){
-    if(!students.length){
-      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
-      students = data || [];
-    }
-    fillCounselingStudentSelects();
-    const { data, error } = await sb.from('counseling').select('*').order('date', { ascending: false });
-    if(error){
-      counselingArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
-      return;
-    }
-    counselingRecords = data || [];
-    renderCounseling();
-  }
-
-  function renderCounseling(){
-    const filterStudent = counselingStudentFilter.value;
-    const filtered = counselingRecords.filter(r => filterStudent === 'all' || r.student_id === filterStudent);
-    if(!filtered.length){
-      counselingArea.innerHTML = `<div class="empty"><div class="big">💬</div>상담 기록이 없어요. [+ 상담 추가]로 시작해보세요.</div>`;
-      return;
-    }
-    const table = document.createElement('table');
-    table.innerHTML = `<thead><tr>
-      <th>학생</th><th>상담일</th><th>방식</th><th>상담자</th><th>내용</th><th>다음상담</th><th>관리</th>
-    </tr></thead>`;
-    const tb = document.createElement('tbody');
-    filtered.forEach(r => {
-      const student = students.find(s => s.id === r.student_id);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
-        <td data-label="상담일">${r.date || '-'}</td>
-        <td data-label="방식">${r.type || '-'}</td>
-        <td data-label="상담자">${r.counselor || '-'}</td>
-        <td data-label="내용">${escapeHtml(r.content || '-')}</td>
-        <td data-label="다음상담">${r.next_date || '-'}</td>
-        <td data-label="관리">
-          <button class="btn btn-ghost btn-sm editCounselingBtn">수정</button>
-          <button class="btn btn-danger btn-sm delCounselingBtn">삭제</button>
-        </td>
-      `;
-      tr.querySelector('.editCounselingBtn').onclick = () => openCounselingModal(r);
-      tr.querySelector('.delCounselingBtn').onclick = () => deleteCounseling(r.id);
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb);
-    counselingArea.innerHTML = '';
-    counselingArea.appendChild(table);
-  }
-
-  counselingStudentFilter.addEventListener('change', renderCounseling);
-
-  // ====== 성적 관련 ======
-  const gradeOverlay = document.getElementById('gradeOverlay');
-  const gradesArea = document.getElementById('gradesArea');
-  const gradesStudentFilter = document.getElementById('gradesStudentFilter');
-  const gradesClassFilter = document.getElementById('gradesClassFilter');
-  let gradeRecords = [];
-
-  function fillGradeStudentSelects(){
-    const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
-    document.getElementById('gf_student').innerHTML = options;
-
-    const classes = [...new Set(students.filter(s => s.class_name).map(s => s.class_name))];
-    const currentClass = gradesClassFilter.value;
-    gradesClassFilter.innerHTML = '<option value="all">전체 반</option>' +
-      classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-    if(classes.includes(currentClass)) gradesClassFilter.value = currentClass;
-
-    updateGradesStudentFilterOptions();
-  }
-
-  function updateGradesStudentFilterOptions(){
-    const selectedClass = gradesClassFilter.value;
-    const sorted = [...students]
-      .filter(s => selectedClass === 'all' || s.class_name === selectedClass)
-      .sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
-    const current = gradesStudentFilter.value;
-    gradesStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
-    if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
-    else gradesStudentFilter.value = 'all';
-  }
-
-  function createExamRowHtml(data){
-    const type = escapeHtml(data?.exam_type || '');
-    const range = escapeHtml(data?.unit_range || '');
-    const score = (data?.score ?? '');
-    const maxScore = (data?.max_score ?? 100);
-    const memo = escapeHtml(data?.memo || '');
-    const result = data?.result || '통과';
-    return `
-      <div class="examRowBlock" style="border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; position:relative;">
-        <button type="button" class="btn btn-ghost btn-sm removeRowBtn" style="position:absolute; top:10px; right:10px;">삭제</button>
-        <div class="row2">
-          <div class="field">
-            <label>시험 종류</label>
-            <input type="text" class="examType" placeholder="예: 단어시험, 받아쓰기" value="${type}">
-          </div>
-          <div class="field">
-            <label>결과</label>
-            <select class="examResult">
-              <option value="통과" ${result === '통과' ? 'selected' : ''}>통과</option>
-              <option value="재시험" ${result === '재시험' ? 'selected' : ''}>재시험</option>
-              <option value="보류" ${result === '보류' ? 'selected' : ''}>보류</option>
-            </select>
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>점수</label>
-            <input type="number" class="examScore" placeholder="예: 85" value="${score}">
-          </div>
-          <div class="field">
-            <label>만점</label>
-            <input type="number" class="examMaxScore" value="${maxScore}">
-          </div>
-        </div>
-        <div class="field">
-          <label>메모</label>
-          <textarea class="examMemo" rows="2" placeholder="예: 관사 실수 많음">${memo}</textarea>
-        </div>
-      </div>
-    `;
-  }
-
-  function openGradeModal(rec){
-    fillGradeStudentSelects();
-    document.getElementById('gradeModalTitle').textContent = rec ? '성적 수정' : '성적 추가';
-    document.getElementById('gf_id').value = rec ? rec.id : '';
-    document.getElementById('gf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
-    document.getElementById('gf_date').value = rec?.exam_date || todayStr();
-    document.getElementById('gf_textbook').value = rec?.textbook || '';
-    document.getElementById('gf_range').value = rec?.unit_range || '';
-    document.getElementById('gf_lessonmemo').value = rec?.lesson_memo || '';
-
-    const container = document.getElementById('gf_examRows');
-    container.innerHTML = createExamRowHtml(rec);
-
-    // 수정할 때는 한 과목만 다루므로 "한 과목 더 추가" 버튼은 숨김
-    document.getElementById('gf_addRowBtn').style.display = rec ? 'none' : 'flex';
-
-    gradeOverlay.classList.add('show');
-  }
-  function closeGradeModal(){ gradeOverlay.classList.remove('show'); }
-
-  document.getElementById('openGradeAddBtn').onclick = () => openGradeModal(null);
-  document.getElementById('gradeCancelBtn').onclick = closeGradeModal;
-  gradeOverlay.addEventListener('click', (e) => { if(e.target === gradeOverlay) closeGradeModal(); });
-
-  document.getElementById('gf_addRowBtn').onclick = () => {
-    document.getElementById('gf_examRows').insertAdjacentHTML('beforeend', createExamRowHtml(null));
-  };
-
-  document.getElementById('gf_examRows').addEventListener('click', (e) => {
-    if(e.target.classList.contains('removeRowBtn')){
-      const container = document.getElementById('gf_examRows');
-      if(container.children.length > 1){
-        e.target.closest('.examRowBlock').remove();
-      } else {
-        showToast('최소 한 과목은 있어야 해요');
-      }
-    }
-  });
-
-  document.getElementById('gradeSaveBtn').onclick = async () => {
-    const studentId = document.getElementById('gf_student').value;
-    if(!studentId){ showToast('학생을 선택해주세요'); return; }
-    const examDate = document.getElementById('gf_date').value || todayStr();
-    const textbook = document.getElementById('gf_textbook').value || null;
-    const unitRange = document.getElementById('gf_range').value || null;
-    const lessonMemo = document.getElementById('gf_lessonmemo').value || null;
-    const editId = document.getElementById('gf_id').value;
-
-    const blocks = [...document.querySelectorAll('#gf_examRows .examRowBlock')];
-    const payloads = blocks.map(block => ({
-      student_id: studentId,
-      exam_date: examDate,
-      textbook: textbook,
-      unit_range: unitRange,
-      lesson_memo: lessonMemo,
-      exam_type: block.querySelector('.examType').value || null,
-      score: block.querySelector('.examScore').value === '' ? null : Number(block.querySelector('.examScore').value),
-      max_score: block.querySelector('.examMaxScore').value === '' ? 100 : Number(block.querySelector('.examMaxScore').value),
-      result: block.querySelector('.examResult').value,
-      memo: block.querySelector('.examMemo').value || null,
-    }));
-
-    let error;
-    if(editId){
-      ({ error } = await sb.from('grades').update(payloads[0]).eq('id', editId));
-    } else {
-      ({ error } = await sb.from('grades').insert(payloads));
-    }
-    if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast(editId ? '수정됐어요' : `${payloads.length}개 시험 기록이 저장됐어요`);
-    closeGradeModal();
-    loadGrades();
-  };
-
-  async function deleteGrade(id){
-    if(!confirm('이 성적 기록을 삭제할까요?')) return;
-    const { error } = await sb.from('grades').delete().eq('id', id);
-    if(error){ showToast('삭제 실패: ' + error.message); return; }
-    showToast('삭제됐어요');
-    loadGrades();
-  }
-
-  async function loadGrades(){
-    if(!students.length){
-      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
-      students = data || [];
-    }
-    fillGradeStudentSelects();
-    const { data, error } = await sb.from('grades').select('*').order('exam_date', { ascending: false });
-    if(error){
-      gradesArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
-      return;
-    }
-    gradeRecords = data || [];
-    renderGrades();
-  }
-
-  function sendGradeSms(record, student){
-    if(!student || !student.parent_phone){
-      showToast('학부모 연락처가 등록되어 있지 않아요');
-      return;
-    }
-    // 같은 학생, 같은 시험일에 본 시험을 모두 모아서 한 번에 안내
-    const sameDay = gradeRecords.filter(r => r.student_id === record.student_id && r.exam_date === record.exam_date);
-
-    const dateLabel = record.exam_date ? record.exam_date.replace(/-/g, '.') : '';
-    let message = `[윌그로우공도국제캠퍼스]\n안녕하세요, ${student.name} 학생 학부모님.\n${dateLabel} 수업 및 시험 결과를 안내드립니다.\n\n`;
-
-    if(record.lesson_memo){
-      message += `[오늘 배운 내용]\n${record.lesson_memo}\n\n`;
-    }
-
-    message += `[시험 결과]\n`;
-    sameDay.forEach(r => {
-      const scoreLabel = (r.score === null || r.score === undefined) ? '' : ` ${r.score}/${r.max_score ?? 100}점`;
-      const typeLabel = r.exam_type || '시험';
-      const rangeLabel = r.unit_range ? ` (${r.unit_range})` : '';
-      message += `· ${typeLabel}${rangeLabel}:${scoreLabel} - ${r.result}\n`;
-    });
-
-    message += `\n항상 관심 가져주셔서 감사합니다. 궁금하신 점 있으시면 언제든 연락 부탁드립니다.`;
-
-    const phone = student.parent_phone.replace(/[^0-9]/g, '');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const separator = isIOS ? '&' : '?';
-    window.location.href = `sms:${phone}${separator}body=${encodeURIComponent(message)}`;
-  }
-
-  function renderGrades(){
-    const filterStudent = gradesStudentFilter.value;
-    const filterClass = gradesClassFilter.value;
-    const filtered = gradeRecords.filter(r => {
-      const student = students.find(s => s.id === r.student_id);
-      const matchStudent = filterStudent === 'all' || r.student_id === filterStudent;
-      const matchClass = filterClass === 'all' || (student && student.class_name === filterClass);
-      return matchStudent && matchClass;
-    });
-    if(!filtered.length){
-      gradesArea.innerHTML = `<div class="empty"><div class="big">📝</div>성적 기록이 없어요. [+ 성적 추가]로 시작해보세요.</div>`;
-      return;
-    }
-    const table = document.createElement('table');
-    table.innerHTML = `<thead><tr>
-      <th>학생</th><th>시험일</th><th>교재</th><th>범위</th><th>배운내용</th><th>시험종류</th><th>점수</th><th>결과</th><th>메모</th><th>관리</th>
-    </tr></thead>`;
-    const tb = document.createElement('tbody');
-    filtered.forEach(r => {
-      const student = students.find(s => s.id === r.student_id);
-      const scoreLabel = (r.score === null || r.score === undefined) ? '-' : `${r.score} / ${r.max_score ?? 100}`;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
-        <td data-label="시험일">${r.exam_date || '-'}</td>
-        <td data-label="교재">${escapeHtml(r.textbook || '-')}</td>
-        <td data-label="범위">${escapeHtml(r.unit_range || '-')}</td>
-        <td data-label="배운내용">${escapeHtml(r.lesson_memo || '-')}</td>
-        <td data-label="시험종류">${escapeHtml(r.exam_type || '-')}</td>
-        <td data-label="점수">${scoreLabel}</td>
-        <td data-label="결과"><span class="badge ${r.result === '통과' ? 'on' : 'off'}">${r.result}</span></td>
-        <td data-label="메모">${escapeHtml(r.memo || '-')}</td>
-        <td data-label="관리">
-          <button class="btn btn-ghost btn-sm smsGradeBtn">💬 문자</button>
-          <button class="btn btn-ghost btn-sm editGradeBtn">수정</button>
-          <button class="btn btn-danger btn-sm delGradeBtn">삭제</button>
-        </td>
-      `;
-      tr.querySelector('.smsGradeBtn').onclick = () => sendGradeSms(r, student);
-      tr.querySelector('.editGradeBtn').onclick = () => openGradeModal(r);
-      tr.querySelector('.delGradeBtn').onclick = () => deleteGrade(r.id);
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb);
-    gradesArea.innerHTML = '';
-    gradesArea.appendChild(table);
-  }
-
-  gradesStudentFilter.addEventListener('change', renderGrades);
-  gradesClassFilter.addEventListener('change', () => {
-    updateGradesStudentFilterOptions();
-    renderGrades();
-  });
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
