@@ -478,46 +478,23 @@
     </div>
     <div class="row2">
       <div class="field">
-        <label>시험일</label>
+        <label>시험일 (아래 과목들에 공통 적용)</label>
         <input type="date" id="gf_date">
       </div>
       <div class="field">
-        <label>시험 종류</label>
-        <input type="text" id="gf_examtype" placeholder="예: 단어시험, 받아쓰기">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>교재명</label>
+        <label>교재명 (아래 과목들에 공통 적용)</label>
         <input type="text" id="gf_textbook" placeholder="예: Reading Adventure 2">
       </div>
-      <div class="field">
-        <label>시험 범위</label>
-        <input type="text" id="gf_range" placeholder="예: Unit 5-6">
-      </div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>점수</label>
-        <input type="number" id="gf_score" placeholder="예: 85">
-      </div>
-      <div class="field">
-        <label>만점</label>
-        <input type="number" id="gf_maxscore" value="100">
-      </div>
     </div>
     <div class="field">
-      <label>결과</label>
-      <select id="gf_result">
-        <option value="통과">통과</option>
-        <option value="재시험">재시험</option>
-        <option value="보류">보류</option>
-      </select>
+      <label>시험 범위 (아래 과목들에 공통 적용)</label>
+      <input type="text" id="gf_range" placeholder="예: Unit 5-6">
     </div>
-    <div class="field">
-      <label>메모</label>
-      <textarea id="gf_memo" rows="2" placeholder="예: 관사 실수 많음, 복습 필요"></textarea>
-    </div>
+
+    <div id="gf_examRows"></div>
+
+    <button type="button" class="btn btn-ghost btn-sm" id="gf_addRowBtn" style="width:100%; justify-content:center; margin-bottom:16px;">+ 시험 한 과목 더 추가</button>
+
     <div class="modal-actions">
       <button class="btn btn-ghost" id="gradeCancelBtn">취소</button>
       <button class="btn btn-primary" id="gradeSaveBtn">저장</button>
@@ -1457,19 +1434,63 @@
     if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
   }
 
+  function createExamRowHtml(data){
+    const type = escapeHtml(data?.exam_type || '');
+    const range = escapeHtml(data?.unit_range || '');
+    const score = (data?.score ?? '');
+    const maxScore = (data?.max_score ?? 100);
+    const memo = escapeHtml(data?.memo || '');
+    const result = data?.result || '통과';
+    return `
+      <div class="examRowBlock" style="border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; position:relative;">
+        <button type="button" class="btn btn-ghost btn-sm removeRowBtn" style="position:absolute; top:10px; right:10px;">삭제</button>
+        <div class="row2">
+          <div class="field">
+            <label>시험 종류</label>
+            <input type="text" class="examType" placeholder="예: 단어시험, 받아쓰기" value="${type}">
+          </div>
+          <div class="field">
+            <label>결과</label>
+            <select class="examResult">
+              <option value="통과" ${result === '통과' ? 'selected' : ''}>통과</option>
+              <option value="재시험" ${result === '재시험' ? 'selected' : ''}>재시험</option>
+              <option value="보류" ${result === '보류' ? 'selected' : ''}>보류</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>점수</label>
+            <input type="number" class="examScore" placeholder="예: 85" value="${score}">
+          </div>
+          <div class="field">
+            <label>만점</label>
+            <input type="number" class="examMaxScore" value="${maxScore}">
+          </div>
+        </div>
+        <div class="field">
+          <label>메모</label>
+          <textarea class="examMemo" rows="2" placeholder="예: 관사 실수 많음">${memo}</textarea>
+        </div>
+      </div>
+    `;
+  }
+
   function openGradeModal(rec){
     fillGradeStudentSelects();
     document.getElementById('gradeModalTitle').textContent = rec ? '성적 수정' : '성적 추가';
     document.getElementById('gf_id').value = rec ? rec.id : '';
     document.getElementById('gf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
     document.getElementById('gf_date').value = rec?.exam_date || todayStr();
-    document.getElementById('gf_examtype').value = rec?.exam_type || '';
     document.getElementById('gf_textbook').value = rec?.textbook || '';
     document.getElementById('gf_range').value = rec?.unit_range || '';
-    document.getElementById('gf_score').value = rec?.score ?? '';
-    document.getElementById('gf_maxscore').value = rec?.max_score ?? 100;
-    document.getElementById('gf_result').value = rec?.result || '통과';
-    document.getElementById('gf_memo').value = rec?.memo || '';
+
+    const container = document.getElementById('gf_examRows');
+    container.innerHTML = createExamRowHtml(rec);
+
+    // 수정할 때는 한 과목만 다루므로 "한 과목 더 추가" 버튼은 숨김
+    document.getElementById('gf_addRowBtn').style.display = rec ? 'none' : 'flex';
+
     gradeOverlay.classList.add('show');
   }
   function closeGradeModal(){ gradeOverlay.classList.remove('show'); }
@@ -1478,29 +1499,50 @@
   document.getElementById('gradeCancelBtn').onclick = closeGradeModal;
   gradeOverlay.addEventListener('click', (e) => { if(e.target === gradeOverlay) closeGradeModal(); });
 
+  document.getElementById('gf_addRowBtn').onclick = () => {
+    document.getElementById('gf_examRows').insertAdjacentHTML('beforeend', createExamRowHtml(null));
+  };
+
+  document.getElementById('gf_examRows').addEventListener('click', (e) => {
+    if(e.target.classList.contains('removeRowBtn')){
+      const container = document.getElementById('gf_examRows');
+      if(container.children.length > 1){
+        e.target.closest('.examRowBlock').remove();
+      } else {
+        showToast('최소 한 과목은 있어야 해요');
+      }
+    }
+  });
+
   document.getElementById('gradeSaveBtn').onclick = async () => {
     const studentId = document.getElementById('gf_student').value;
     if(!studentId){ showToast('학생을 선택해주세요'); return; }
-    const payload = {
-      student_id: studentId,
-      exam_date: document.getElementById('gf_date').value || todayStr(),
-      exam_type: document.getElementById('gf_examtype').value || null,
-      textbook: document.getElementById('gf_textbook').value || null,
-      unit_range: document.getElementById('gf_range').value || null,
-      score: document.getElementById('gf_score').value === '' ? null : Number(document.getElementById('gf_score').value),
-      max_score: document.getElementById('gf_maxscore').value === '' ? 100 : Number(document.getElementById('gf_maxscore').value),
-      result: document.getElementById('gf_result').value,
-      memo: document.getElementById('gf_memo').value || null,
-    };
+    const examDate = document.getElementById('gf_date').value || todayStr();
+    const textbook = document.getElementById('gf_textbook').value || null;
+    const unitRange = document.getElementById('gf_range').value || null;
     const editId = document.getElementById('gf_id').value;
+
+    const blocks = [...document.querySelectorAll('#gf_examRows .examRowBlock')];
+    const payloads = blocks.map(block => ({
+      student_id: studentId,
+      exam_date: examDate,
+      textbook: textbook,
+      unit_range: unitRange,
+      exam_type: block.querySelector('.examType').value || null,
+      score: block.querySelector('.examScore').value === '' ? null : Number(block.querySelector('.examScore').value),
+      max_score: block.querySelector('.examMaxScore').value === '' ? 100 : Number(block.querySelector('.examMaxScore').value),
+      result: block.querySelector('.examResult').value,
+      memo: block.querySelector('.examMemo').value || null,
+    }));
+
     let error;
     if(editId){
-      ({ error } = await sb.from('grades').update(payload).eq('id', editId));
+      ({ error } = await sb.from('grades').update(payloads[0]).eq('id', editId));
     } else {
-      ({ error } = await sb.from('grades').insert(payload));
+      ({ error } = await sb.from('grades').insert(payloads));
     }
     if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast('저장됐어요');
+    showToast(editId ? '수정됐어요' : `${payloads.length}개 시험 기록이 저장됐어요`);
     closeGradeModal();
     loadGrades();
   };
