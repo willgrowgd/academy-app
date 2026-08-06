@@ -278,6 +278,10 @@
           <option value="미납">미납</option>
           <option value="납부완료">납부완료</option>
         </select>
+        <div class="search" style="max-width:200px;">
+          <span>🔎</span>
+          <input type="text" id="tuitionSearchInput" placeholder="이름으로 검색">
+        </div>
         <div style="margin-left:auto; display:flex; gap:10px;">
           <button class="btn btn-ghost" id="genTuitionBtn">선택한 달 일괄생성</button>
           <button class="btn btn-primary" id="openTuitionAddBtn">+ 학원비 추가</button>
@@ -986,9 +990,11 @@
   const tuitionOverlay = document.getElementById('tuitionOverlay');
   const tuitionMonthInput = document.getElementById('tuitionMonth');
   const tuitionStatusFilter = document.getElementById('tuitionStatusFilter');
+  const tuitionSearchInput = document.getElementById('tuitionSearchInput');
   const tuitionArea = document.getElementById('tuitionArea');
   const tuitionStatRow = document.getElementById('tuitionStatRow');
   let tuitionRecords = [];
+  let tuitionSearch = '';
 
   function currentMonthStr(){
     const d = new Date();
@@ -997,6 +1003,7 @@
   tuitionMonthInput.value = currentMonthStr();
   tuitionMonthInput.addEventListener('change', loadTuition);
   tuitionStatusFilter.addEventListener('change', renderTuition);
+  tuitionSearchInput.addEventListener('input', (e) => { tuitionSearch = e.target.value; renderTuition(); });
 
   function fillStudentSelect(){
     const sel = document.getElementById('tf_student');
@@ -1109,7 +1116,13 @@
 
   function renderTuition(){
     const filterStatus = tuitionStatusFilter.value;
-    const filtered = tuitionRecords.filter(r => filterStatus === 'all' || r.status === filterStatus);
+    const filtered = tuitionRecords.filter(r => {
+      const matchStatus = filterStatus === 'all' || r.status === filterStatus;
+      if(!matchStatus) return false;
+      if(!tuitionSearch) return true;
+      const student = students.find(s => s.id === r.student_id);
+      return student && student.name.toLowerCase().includes(tuitionSearch.toLowerCase());
+    });
 
     const paidCount = tuitionRecords.filter(r => r.status === '납부완료').length;
     const unpaidCount = tuitionRecords.filter(r => r.status === '미납').length;
