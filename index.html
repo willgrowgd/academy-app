@@ -479,13 +479,14 @@
       </div>
       <div class="field">
         <label>결제수단</label>
-        <select id="tf_method">
-          <option value="">선택 안 함</option>
-          <option value="카드">카드</option>
-          <option value="현금">현금</option>
-          <option value="계좌이체">계좌이체</option>
-          <option value="기타">기타</option>
-        </select>
+        <input type="text" id="tf_method" list="tf_method_list" placeholder="예: 카드(삼성), 현금, 계좌이체">
+        <datalist id="tf_method_list">
+          <option value="카드(삼성)">
+          <option value="카드(현대)">
+          <option value="카드(국민)">
+          <option value="현금">
+          <option value="계좌이체">
+        </datalist>
       </div>
     </div>
     <div class="row2">
