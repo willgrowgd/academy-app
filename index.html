@@ -231,6 +231,7 @@
               <th>입학일</th>
               <th>상태</th>
               <th>관리</th>
+              <th>메모</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -684,6 +685,7 @@
           <button class="btn btn-ghost btn-sm editBtn">수정</button>
           <button class="btn btn-danger btn-sm delBtn">삭제</button>
         </td>
+        <td data-label="메모">${escapeHtml(s.memo || '-')}</td>
       `;
       tr.querySelector('.editBtn').onclick = () => openModal(s);
       tr.querySelector('.delBtn').onclick = () => deleteStudent(s.id, s.name);
@@ -1040,7 +1042,7 @@
 
     const table = document.createElement('table');
     table.innerHTML = `<thead><tr>
-      <th>학생</th><th>금액</th><th>상태</th><th>결제수단</th><th>수강기간</th><th>납부일</th><th>관리</th>
+      <th>학생</th><th>금액</th><th>상태</th><th>결제수단</th><th>수강기간</th><th>납부일</th><th>관리</th><th>메모</th>
     </tr></thead>`;
     const tb = document.createElement('tbody');
 
@@ -1059,6 +1061,7 @@
           <button class="btn btn-ghost btn-sm editTuitionBtn">수정</button>
           <button class="btn btn-danger btn-sm delTuitionBtn">삭제</button>
         </td>
+        <td data-label="메모">${escapeHtml(r.memo || '-')}</td>
       `;
       tr.querySelector('.editTuitionBtn').onclick = () => openTuitionModal(r);
       tr.querySelector('.delTuitionBtn').onclick = () => deleteTuition(r.id);
