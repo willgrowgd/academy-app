@@ -331,11 +331,11 @@
   <div id="gradesView" style="display:none;">
     <div class="panel">
       <div class="toolbar">
-        <select class="filter" id="gradesClassFilter">
-          <option value="all">전체 반</option>
-        </select>
         <select class="filter" id="gradesStudentFilter">
           <option value="all">전체 학생</option>
+        </select>
+        <select class="filter" id="gradesClassFilter">
+          <option value="all">전체 반</option>
         </select>
         <button class="btn btn-primary" id="openGradeAddBtn" style="margin-left:auto;">+ 성적 추가</button>
       </div>
@@ -1434,15 +1434,26 @@
     const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
     const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
     document.getElementById('gf_student').innerHTML = options;
-    const current = gradesStudentFilter.value;
-    gradesStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
-    if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
 
     const classes = [...new Set(students.filter(s => s.class_name).map(s => s.class_name))];
     const currentClass = gradesClassFilter.value;
     gradesClassFilter.innerHTML = '<option value="all">전체 반</option>' +
       classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     if(classes.includes(currentClass)) gradesClassFilter.value = currentClass;
+
+    updateGradesStudentFilterOptions();
+  }
+
+  function updateGradesStudentFilterOptions(){
+    const selectedClass = gradesClassFilter.value;
+    const sorted = [...students]
+      .filter(s => selectedClass === 'all' || s.class_name === selectedClass)
+      .sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
+    const current = gradesStudentFilter.value;
+    gradesStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
+    if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
+    else gradesStudentFilter.value = 'all';
   }
 
   function createExamRowHtml(data){
@@ -1656,7 +1667,7 @@
 
   gradesStudentFilter.addEventListener('change', renderGrades);
   gradesClassFilter.addEventListener('change', () => {
-    gradesStudentFilter.value = 'all';
+    updateGradesStudentFilterOptions();
     renderGrades();
   });
 
