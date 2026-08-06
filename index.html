@@ -204,6 +204,7 @@
     <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
     <button class="btn btn-ghost tabBtn" id="tabTuition">학원비 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리</button>
+    <button class="btn btn-ghost tabBtn" id="tabGrades">성적 관리</button>
   </div>
 
   <div id="studentsView">
@@ -324,6 +325,18 @@
         </div>
         <div id="counselingArea"></div>
       </div>
+    </div>
+  </div>
+
+  <div id="gradesView" style="display:none;">
+    <div class="panel">
+      <div class="toolbar">
+        <select class="filter" id="gradesStudentFilter">
+          <option value="all">전체 학생</option>
+        </select>
+        <button class="btn btn-primary" id="openGradeAddBtn" style="margin-left:auto;">+ 성적 추가</button>
+      </div>
+      <div id="gradesArea"></div>
     </div>
   </div>
 </div>
@@ -450,6 +463,64 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" id="counselingCancelBtn">취소</button>
       <button class="btn btn-primary" id="counselingSaveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 성적 추가/수정 모달 -->
+<div class="overlay" id="gradeOverlay">
+  <div class="modal">
+    <h2 id="gradeModalTitle">성적 추가</h2>
+    <input type="hidden" id="gf_id">
+    <div class="field">
+      <label>학생 *</label>
+      <select id="gf_student"></select>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>시험일</label>
+        <input type="date" id="gf_date">
+      </div>
+      <div class="field">
+        <label>시험 종류</label>
+        <input type="text" id="gf_examtype" placeholder="예: 단어시험, 받아쓰기">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>교재명</label>
+        <input type="text" id="gf_textbook" placeholder="예: Reading Adventure 2">
+      </div>
+      <div class="field">
+        <label>시험 범위</label>
+        <input type="text" id="gf_range" placeholder="예: Unit 5-6">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>점수</label>
+        <input type="number" id="gf_score" placeholder="예: 85">
+      </div>
+      <div class="field">
+        <label>만점</label>
+        <input type="number" id="gf_maxscore" value="100">
+      </div>
+    </div>
+    <div class="field">
+      <label>결과</label>
+      <select id="gf_result">
+        <option value="통과">통과</option>
+        <option value="재시험">재시험</option>
+        <option value="보류">보류</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <textarea id="gf_memo" rows="2" placeholder="예: 관사 실수 많음, 복습 필요"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="gradeCancelBtn">취소</button>
+      <button class="btn btn-primary" id="gradeSaveBtn">저장</button>
     </div>
   </div>
 </div>
@@ -742,13 +813,15 @@
   const tabAttendance = document.getElementById('tabAttendance');
   const tabTuition = document.getElementById('tabTuition');
   const tabCounseling = document.getElementById('tabCounseling');
+  const tabGrades = document.getElementById('tabGrades');
   const studentsView = document.getElementById('studentsView');
   const attendanceView = document.getElementById('attendanceView');
   const tuitionView = document.getElementById('tuitionView');
   const counselingView = document.getElementById('counselingView');
+  const gradesView = document.getElementById('gradesView');
 
   function setActiveTab(activeBtn){
-    [tabStudents, tabAttendance, tabTuition, tabCounseling].forEach(b => {
+    [tabStudents, tabAttendance, tabTuition, tabCounseling, tabGrades].forEach(b => {
       b.className = (b === activeBtn) ? 'btn btn-primary tabBtn' : 'btn btn-ghost tabBtn';
     });
   }
@@ -758,6 +831,7 @@
     attendanceView.style.display = 'none';
     tuitionView.style.display = 'none';
     counselingView.style.display = 'none';
+    gradesView.style.display = 'none';
   }
 
   tabStudents.onclick = () => {
@@ -782,6 +856,12 @@
     counselingView.style.display = 'block';
     setActiveTab(tabCounseling);
     loadInquiries();
+  };
+  tabGrades.onclick = () => {
+    hideAllViews();
+    gradesView.style.display = 'block';
+    setActiveTab(tabGrades);
+    loadGrades();
   };
 
   // 상담관리 내부 서브탭 (신규상담 / 재원상담)
@@ -1361,6 +1441,133 @@
   }
 
   counselingStudentFilter.addEventListener('change', renderCounseling);
+
+  // ====== 성적 관련 ======
+  const gradeOverlay = document.getElementById('gradeOverlay');
+  const gradesArea = document.getElementById('gradesArea');
+  const gradesStudentFilter = document.getElementById('gradesStudentFilter');
+  let gradeRecords = [];
+
+  function fillGradeStudentSelects(){
+    const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
+    document.getElementById('gf_student').innerHTML = options;
+    const current = gradesStudentFilter.value;
+    gradesStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
+    if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
+  }
+
+  function openGradeModal(rec){
+    fillGradeStudentSelects();
+    document.getElementById('gradeModalTitle').textContent = rec ? '성적 수정' : '성적 추가';
+    document.getElementById('gf_id').value = rec ? rec.id : '';
+    document.getElementById('gf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
+    document.getElementById('gf_date').value = rec?.exam_date || todayStr();
+    document.getElementById('gf_examtype').value = rec?.exam_type || '';
+    document.getElementById('gf_textbook').value = rec?.textbook || '';
+    document.getElementById('gf_range').value = rec?.unit_range || '';
+    document.getElementById('gf_score').value = rec?.score ?? '';
+    document.getElementById('gf_maxscore').value = rec?.max_score ?? 100;
+    document.getElementById('gf_result').value = rec?.result || '통과';
+    document.getElementById('gf_memo').value = rec?.memo || '';
+    gradeOverlay.classList.add('show');
+  }
+  function closeGradeModal(){ gradeOverlay.classList.remove('show'); }
+
+  document.getElementById('openGradeAddBtn').onclick = () => openGradeModal(null);
+  document.getElementById('gradeCancelBtn').onclick = closeGradeModal;
+  gradeOverlay.addEventListener('click', (e) => { if(e.target === gradeOverlay) closeGradeModal(); });
+
+  document.getElementById('gradeSaveBtn').onclick = async () => {
+    const studentId = document.getElementById('gf_student').value;
+    if(!studentId){ showToast('학생을 선택해주세요'); return; }
+    const payload = {
+      student_id: studentId,
+      exam_date: document.getElementById('gf_date').value || todayStr(),
+      exam_type: document.getElementById('gf_examtype').value || null,
+      textbook: document.getElementById('gf_textbook').value || null,
+      unit_range: document.getElementById('gf_range').value || null,
+      score: document.getElementById('gf_score').value === '' ? null : Number(document.getElementById('gf_score').value),
+      max_score: document.getElementById('gf_maxscore').value === '' ? 100 : Number(document.getElementById('gf_maxscore').value),
+      result: document.getElementById('gf_result').value,
+      memo: document.getElementById('gf_memo').value || null,
+    };
+    const editId = document.getElementById('gf_id').value;
+    let error;
+    if(editId){
+      ({ error } = await sb.from('grades').update(payload).eq('id', editId));
+    } else {
+      ({ error } = await sb.from('grades').insert(payload));
+    }
+    if(error){ showToast('저장 실패: ' + error.message); return; }
+    showToast('저장됐어요');
+    closeGradeModal();
+    loadGrades();
+  };
+
+  async function deleteGrade(id){
+    if(!confirm('이 성적 기록을 삭제할까요?')) return;
+    const { error } = await sb.from('grades').delete().eq('id', id);
+    if(error){ showToast('삭제 실패: ' + error.message); return; }
+    showToast('삭제됐어요');
+    loadGrades();
+  }
+
+  async function loadGrades(){
+    if(!students.length){
+      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
+      students = data || [];
+    }
+    fillGradeStudentSelects();
+    const { data, error } = await sb.from('grades').select('*').order('exam_date', { ascending: false });
+    if(error){
+      gradesArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    gradeRecords = data || [];
+    renderGrades();
+  }
+
+  function renderGrades(){
+    const filterStudent = gradesStudentFilter.value;
+    const filtered = gradeRecords.filter(r => filterStudent === 'all' || r.student_id === filterStudent);
+    if(!filtered.length){
+      gradesArea.innerHTML = `<div class="empty"><div class="big">📝</div>성적 기록이 없어요. [+ 성적 추가]로 시작해보세요.</div>`;
+      return;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr>
+      <th>학생</th><th>시험일</th><th>교재</th><th>범위</th><th>시험종류</th><th>점수</th><th>결과</th><th>메모</th><th>관리</th>
+    </tr></thead>`;
+    const tb = document.createElement('tbody');
+    filtered.forEach(r => {
+      const student = students.find(s => s.id === r.student_id);
+      const scoreLabel = (r.score === null || r.score === undefined) ? '-' : `${r.score} / ${r.max_score ?? 100}`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
+        <td data-label="시험일">${r.exam_date || '-'}</td>
+        <td data-label="교재">${escapeHtml(r.textbook || '-')}</td>
+        <td data-label="범위">${escapeHtml(r.unit_range || '-')}</td>
+        <td data-label="시험종류">${escapeHtml(r.exam_type || '-')}</td>
+        <td data-label="점수">${scoreLabel}</td>
+        <td data-label="결과"><span class="badge ${r.result === '통과' ? 'on' : 'off'}">${r.result}</span></td>
+        <td data-label="메모">${escapeHtml(r.memo || '-')}</td>
+        <td data-label="관리">
+          <button class="btn btn-ghost btn-sm editGradeBtn">수정</button>
+          <button class="btn btn-danger btn-sm delGradeBtn">삭제</button>
+        </td>
+      `;
+      tr.querySelector('.editGradeBtn').onclick = () => openGradeModal(r);
+      tr.querySelector('.delGradeBtn').onclick = () => deleteGrade(r.id);
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    gradesArea.innerHTML = '';
+    gradesArea.appendChild(table);
+  }
+
+  gradesStudentFilter.addEventListener('change', renderGrades);
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
