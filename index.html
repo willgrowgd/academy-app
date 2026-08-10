@@ -204,7 +204,7 @@
     <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
     <button class="btn btn-ghost tabBtn" id="tabTuition">학원비 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리</button>
-    <button class="btn btn-ghost tabBtn" id="tabGrades">성적 관리</button>
+    <button class="btn btn-ghost tabBtn" id="tabGrades">시험 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabTextbooks">교재 관리</button>
   </div>
 
@@ -343,7 +343,7 @@
           <option value="all">전체 반</option>
         </select>
         <button class="btn btn-ghost" id="openGradeBulkBtn">+ 반 전체 한번에</button>
-        <button class="btn btn-primary" id="openGradeAddBtn" style="margin-left:auto;">+ 성적 추가</button>
+        <button class="btn btn-primary" id="openGradeAddBtn" style="margin-left:auto;">+ 시험 추가</button>
       </div>
       <div id="gradesArea"></div>
     </div>
@@ -499,10 +499,10 @@
   </div>
 </div>
 
-<!-- 성적 추가/수정 모달 -->
+<!-- 시험 추가/수정 모달 -->
 <div class="overlay" id="gradeOverlay">
   <div class="modal">
-    <h2 id="gradeModalTitle">성적 추가</h2>
+    <h2 id="gradeModalTitle">시험 추가</h2>
     <input type="hidden" id="gf_id">
     <div class="field">
       <label>학생 *</label>
@@ -540,10 +540,10 @@
   </div>
 </div>
 
-<!-- 반 전체 일괄 성적 입력 모달 -->
+<!-- 반 전체 일괄 시험 입력 모달 -->
 <div class="overlay" id="gradeBulkOverlay">
   <div class="modal" style="max-width:600px;">
-    <h2>반 전체 성적 한번에 추가</h2>
+    <h2>반 전체 시험 한번에 추가</h2>
     <div class="row2">
       <div class="field">
         <label>반 선택 *</label>
@@ -1700,7 +1700,7 @@
 
   function openGradeModal(rec){
     fillGradeStudentSelects();
-    document.getElementById('gradeModalTitle').textContent = rec ? '성적 수정' : '성적 추가';
+    document.getElementById('gradeModalTitle').textContent = rec ? '시험 수정' : '시험 추가';
     document.getElementById('gf_id').value = rec ? rec.id : '';
     document.getElementById('gf_student').value = rec ? rec.student_id : (students.find(s=>s.status==='재원')?.id || '');
     document.getElementById('gf_date').value = rec?.exam_date || todayStr();
@@ -1773,7 +1773,7 @@
   };
 
   async function deleteGrade(id){
-    if(!confirm('이 성적 기록을 삭제할까요?')) return;
+    if(!confirm('이 시험 기록을 삭제할까요?')) return;
     const { error } = await sb.from('grades').delete().eq('id', id);
     if(error){ showToast('삭제 실패: ' + error.message); return; }
     showToast('삭제됐어요');
@@ -1836,7 +1836,7 @@
       return matchStudent && matchClass;
     });
     if(!filtered.length){
-      gradesArea.innerHTML = `<div class="empty"><div class="big">📝</div>성적 기록이 없어요. [+ 성적 추가]로 시작해보세요.</div>`;
+      gradesArea.innerHTML = `<div class="empty"><div class="big">📝</div>시험 기록이 없어요. [+ 시험 추가]로 시작해보세요.</div>`;
       return;
     }
     const table = document.createElement('table');
@@ -1954,7 +1954,7 @@
 
     const { error } = await sb.from('grades').insert(payloads);
     if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast(`${payloads.length}명 성적이 한번에 저장됐어요`);
+    showToast(`${payloads.length}명 시험 결과가 한번에 저장됐어요`);
     gradeBulkOverlay.classList.remove('show');
     loadGrades();
   };
