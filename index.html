@@ -365,6 +365,7 @@
           <option value="완료">완료</option>
         </select>
         <button class="btn btn-ghost" id="openTextbookBulkBtn">+ 반 전체 한번에</button>
+        <button class="btn btn-ghost" id="bulkCompleteTextbookBtn">✅ 지금 보이는 목록 완료 처리</button>
         <button class="btn btn-primary" id="openTextbookAddBtn" style="margin-left:auto;">+ 교재 추가</button>
       </div>
       <div id="textbooksArea"></div>
@@ -1966,6 +1967,7 @@
   const tbClassFilter = document.getElementById('tbClassFilter');
   const tbStatusFilter = document.getElementById('tbStatusFilter');
   let textbookRecords = [];
+  let currentFilteredTextbooks = [];
 
   function fillTextbookFilters(){
     const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
@@ -2097,6 +2099,7 @@
       const matchStatus = filterStatus === 'all' || r.status === filterStatus;
       return matchStudent && matchClass && matchStatus;
     });
+    currentFilteredTextbooks = filtered;
 
     if(!filtered.length){
       textbooksArea.innerHTML = `<div class="empty"><div class="big">📚</div>교재 기록이 없어요. [+ 교재 추가]로 시작해보세요.</div>`;
@@ -2136,6 +2139,25 @@
   tbStudentFilter.addEventListener('change', renderTextbooks);
   tbClassFilter.addEventListener('change', renderTextbooks);
   tbStatusFilter.addEventListener('change', renderTextbooks);
+
+  document.getElementById('bulkCompleteTextbookBtn').onclick = async () => {
+    const targets = currentFilteredTextbooks.filter(r => r.status !== '완료');
+    if(!targets.length){ showToast('완료 처리할 항목이 없어요 (이미 다 완료 상태예요)'); return; }
+    if(!confirm(`지금 보이는 ${targets.length}개 교재 기록을 전부 "완료"로 바꿀까요?`)) return;
+
+    const today = todayStr();
+    const updates = targets.map(r =>
+      sb.from('textbooks').update({ status: '완료', end_date: r.end_date || today }).eq('id', r.id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.filter(r => r.error);
+    if(failed.length){
+      showToast(`${failed.length}건 실패했어요`);
+    } else {
+      showToast(`${targets.length}개 완료 처리됐어요`);
+    }
+    loadTextbooks();
+  };
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
