@@ -206,6 +206,7 @@
     <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabGrades">시험 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabTextbooks">교재 관리</button>
+    <button class="btn btn-ghost tabBtn" id="tabHomework">Homework Plan</button>
   </div>
 
   <div id="studentsView">
@@ -369,6 +370,18 @@
         <button class="btn btn-primary" id="openTextbookAddBtn" style="margin-left:auto;">+ 교재 추가</button>
       </div>
       <div id="textbooksArea"></div>
+    </div>
+  </div>
+
+  <div id="homeworkView" style="display:none;">
+    <div class="panel">
+      <div class="toolbar">
+        <select class="filter" id="hwClassFilter">
+          <option value="all">전체 반</option>
+        </select>
+        <button class="btn btn-primary" id="openHwAddBtn" style="margin-left:auto;">+ 회차 추가</button>
+      </div>
+      <div id="homeworkArea"></div>
     </div>
   </div>
 </div>
@@ -673,6 +686,27 @@
   </div>
 </div>
 
+<!-- Homework Plan 추가 모달 -->
+<div class="overlay" id="hwOverlay">
+  <div class="modal" style="max-width:600px;">
+    <h2>Homework Plan 회차 추가</h2>
+    <div class="field">
+      <label>반 이름 * (아래 회차들에 공통 적용)</label>
+      <input type="text" id="hw_class" list="hw_class_list" placeholder="예: NJ1-3">
+      <datalist id="hw_class_list"></datalist>
+    </div>
+
+    <div id="hw_rows"></div>
+
+    <button type="button" class="btn btn-ghost btn-sm" id="hw_addRowBtn" style="width:100%; justify-content:center; margin-bottom:16px;">+ 회차 한 개 더 추가</button>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="hwCancelBtn">취소</button>
+      <button class="btn btn-primary" id="hwSaveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
 <!-- 학원비 추가/수정 모달 -->
 <div class="overlay" id="tuitionOverlay">
   <div class="modal">
@@ -963,15 +997,17 @@
   const tabCounseling = document.getElementById('tabCounseling');
   const tabGrades = document.getElementById('tabGrades');
   const tabTextbooks = document.getElementById('tabTextbooks');
+  const tabHomework = document.getElementById('tabHomework');
   const studentsView = document.getElementById('studentsView');
   const attendanceView = document.getElementById('attendanceView');
   const tuitionView = document.getElementById('tuitionView');
   const counselingView = document.getElementById('counselingView');
   const gradesView = document.getElementById('gradesView');
   const textbooksView = document.getElementById('textbooksView');
+  const homeworkView = document.getElementById('homeworkView');
 
   function setActiveTab(activeBtn){
-    [tabStudents, tabAttendance, tabTuition, tabCounseling, tabGrades, tabTextbooks].forEach(b => {
+    [tabStudents, tabAttendance, tabTuition, tabCounseling, tabGrades, tabTextbooks, tabHomework].forEach(b => {
       b.className = (b === activeBtn) ? 'btn btn-primary tabBtn' : 'btn btn-ghost tabBtn';
     });
   }
@@ -983,6 +1019,7 @@
     counselingView.style.display = 'none';
     gradesView.style.display = 'none';
     textbooksView.style.display = 'none';
+    homeworkView.style.display = 'none';
   }
 
   tabStudents.onclick = () => {
@@ -1019,6 +1056,12 @@
     textbooksView.style.display = 'block';
     setActiveTab(tabTextbooks);
     loadTextbooks();
+  };
+  tabHomework.onclick = () => {
+    hideAllViews();
+    homeworkView.style.display = 'block';
+    setActiveTab(tabHomework);
+    loadHomeworkPlans();
   };
 
   // 상담관리 내부 서브탭 (신규상담 / 재원상담)
@@ -2158,6 +2201,193 @@
     }
     loadTextbooks();
   };
+
+  // ====== Homework Plan 관련 ======
+  const hwOverlay = document.getElementById('hwOverlay');
+  const homeworkArea = document.getElementById('homeworkArea');
+  const hwClassFilter = document.getElementById('hwClassFilter');
+  let homeworkRecords = [];
+
+  function createHwRowHtml(data){
+    const date = data?.lesson_date || '';
+    const day = escapeHtml(data?.day_label || '');
+    const subject = escapeHtml(data?.subject || '');
+    const lesson = escapeHtml(data?.lesson || '');
+    const homework = escapeHtml(data?.homework || '');
+    const online = escapeHtml(data?.online_homework || '');
+    const test = escapeHtml(data?.test || '');
+    const teacher = escapeHtml(data?.teacher || '');
+    const memo = escapeHtml(data?.memo || '');
+    return `
+      <div class="hwRowBlock" style="border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; position:relative;">
+        <button type="button" class="btn btn-ghost btn-sm removeHwRowBtn" style="position:absolute; top:10px; right:10px;">삭제</button>
+        <div class="row2">
+          <div class="field">
+            <label>날짜</label>
+            <input type="date" class="hwDate" value="${date}">
+          </div>
+          <div class="field">
+            <label>요일</label>
+            <input type="text" class="hwDay" placeholder="예: 화" value="${day}">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>과목 구분</label>
+            <input type="text" class="hwSubject" placeholder="예: Grammar, Speaking" value="${subject}">
+          </div>
+          <div class="field">
+            <label>수업 내용</label>
+            <input type="text" class="hwLesson" placeholder="예: Grammar L1" value="${lesson}">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>숙제</label>
+            <input type="text" class="hwHomework" placeholder="예: WorkBook G1" value="${homework}">
+          </div>
+          <div class="field">
+            <label>온라인 숙제</label>
+            <input type="text" class="hwOnline" placeholder="예: Online G1" value="${online}">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>시험</label>
+            <input type="text" class="hwTest" placeholder="예: Test L1" value="${test}">
+          </div>
+          <div class="field">
+            <label>담당 교사</label>
+            <input type="text" class="hwTeacher" placeholder="예: Annie" value="${teacher}">
+          </div>
+        </div>
+        <div class="field">
+          <label>메모</label>
+          <input type="text" class="hwMemo" value="${memo}">
+        </div>
+      </div>
+    `;
+  }
+
+  function fillHwClassOptions(){
+    const classes = [...new Set([
+      ...students.filter(s => s.class_name).map(s => s.class_name),
+      ...homeworkRecords.map(r => r.class_name)
+    ])];
+    const current = hwClassFilter.value;
+    hwClassFilter.innerHTML = '<option value="all">전체 반</option>' + classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    if(classes.includes(current)) hwClassFilter.value = current;
+    document.getElementById('hw_class_list').innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  document.getElementById('openHwAddBtn').onclick = () => {
+    document.getElementById('hw_class').value = (hwClassFilter.value !== 'all') ? hwClassFilter.value : '';
+    document.getElementById('hw_rows').innerHTML = createHwRowHtml({ lesson_date: todayStr() });
+    hwOverlay.classList.add('show');
+  };
+  document.getElementById('hwCancelBtn').onclick = () => hwOverlay.classList.remove('show');
+  hwOverlay.addEventListener('click', (e) => { if(e.target === hwOverlay) hwOverlay.classList.remove('show'); });
+
+  document.getElementById('hw_addRowBtn').onclick = () => {
+    document.getElementById('hw_rows').insertAdjacentHTML('beforeend', createHwRowHtml({ lesson_date: todayStr() }));
+  };
+
+  document.getElementById('hw_rows').addEventListener('click', (e) => {
+    if(e.target.classList.contains('removeHwRowBtn')){
+      const container = document.getElementById('hw_rows');
+      if(container.children.length > 1){
+        e.target.closest('.hwRowBlock').remove();
+      } else {
+        showToast('최소 한 회차는 있어야 해요');
+      }
+    }
+  });
+
+  document.getElementById('hwSaveBtn').onclick = async () => {
+    const className = document.getElementById('hw_class').value.trim();
+    if(!className){ showToast('반 이름을 입력해주세요'); return; }
+
+    const blocks = [...document.querySelectorAll('#hw_rows .hwRowBlock')];
+    const payloads = blocks.map(block => ({
+      class_name: className,
+      lesson_date: block.querySelector('.hwDate').value || null,
+      day_label: block.querySelector('.hwDay').value || null,
+      subject: block.querySelector('.hwSubject').value || null,
+      lesson: block.querySelector('.hwLesson').value || null,
+      homework: block.querySelector('.hwHomework').value || null,
+      online_homework: block.querySelector('.hwOnline').value || null,
+      test: block.querySelector('.hwTest').value || null,
+      teacher: block.querySelector('.hwTeacher').value || null,
+      memo: block.querySelector('.hwMemo').value || null,
+    }));
+
+    const { error } = await sb.from('homework_plans').insert(payloads);
+    if(error){ showToast('저장 실패: ' + error.message); return; }
+    showToast(`${payloads.length}개 회차가 저장됐어요`);
+    hwOverlay.classList.remove('show');
+    loadHomeworkPlans();
+  };
+
+  async function deleteHomeworkPlan(id){
+    if(!confirm('이 회차를 삭제할까요?')) return;
+    const { error } = await sb.from('homework_plans').delete().eq('id', id);
+    if(error){ showToast('삭제 실패: ' + error.message); return; }
+    showToast('삭제됐어요');
+    loadHomeworkPlans();
+  }
+
+  async function loadHomeworkPlans(){
+    if(!students.length){
+      const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
+      students = data || [];
+    }
+    const { data, error } = await sb.from('homework_plans').select('*').order('lesson_date', { ascending: true });
+    if(error){
+      homeworkArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    homeworkRecords = data || [];
+    fillHwClassOptions();
+    renderHomeworkPlans();
+  }
+
+  function renderHomeworkPlans(){
+    const filterClass = hwClassFilter.value;
+    const filtered = homeworkRecords.filter(r => filterClass === 'all' || r.class_name === filterClass);
+    if(!filtered.length){
+      homeworkArea.innerHTML = `<div class="empty"><div class="big">📋</div>등록된 Homework Plan이 없어요. [+ 회차 추가]로 시작해보세요.</div>`;
+      return;
+    }
+    const table = document.createElement('table');
+    table.innerHTML = `<thead><tr>
+      <th>반</th><th>날짜</th><th>요일</th><th>과목</th><th>수업내용</th><th>숙제</th><th>온라인</th><th>시험</th><th>교사</th><th>관리</th>
+    </tr></thead>`;
+    const tb = document.createElement('tbody');
+    filtered.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td data-label="반" class="name-cell">${escapeHtml(r.class_name)}</td>
+        <td data-label="날짜">${r.lesson_date || '-'}</td>
+        <td data-label="요일">${escapeHtml(r.day_label || '-')}</td>
+        <td data-label="과목">${escapeHtml(r.subject || '-')}</td>
+        <td data-label="수업내용">${escapeHtml(r.lesson || '-')}</td>
+        <td data-label="숙제">${escapeHtml(r.homework || '-')}</td>
+        <td data-label="온라인">${escapeHtml(r.online_homework || '-')}</td>
+        <td data-label="시험">${escapeHtml(r.test || '-')}</td>
+        <td data-label="교사">${escapeHtml(r.teacher || '-')}</td>
+        <td data-label="관리">
+          <button class="btn btn-danger btn-sm delHwBtn">삭제</button>
+        </td>
+      `;
+      tr.querySelector('.delHwBtn').onclick = () => deleteHomeworkPlan(r.id);
+      tb.appendChild(tr);
+    });
+    table.appendChild(tb);
+    homeworkArea.innerHTML = '';
+    homeworkArea.appendChild(table);
+  }
+
+  hwClassFilter.addEventListener('change', renderHomeworkPlans);
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
