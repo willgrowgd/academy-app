@@ -379,12 +379,55 @@
         <select class="filter" id="hwClassFilter">
           <option value="all">전체 반</option>
         </select>
-        <input type="file" id="hwFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
-        <button class="btn btn-ghost" id="hwUploadBtn">📤 엑셀로 업로드</button>
-        <button class="btn btn-primary" id="openHwAddBtn" style="margin-left:auto;">+ 회차 추가</button>
+        <button class="btn btn-primary" id="openHwPhotoAddBtn" style="margin-left:auto;">+ 사진 추가</button>
       </div>
       <div id="homeworkArea"></div>
     </div>
+  </div>
+</div>
+
+<!-- Homework Plan 사진 추가 모달 -->
+<div class="overlay" id="hwPhotoOverlay">
+  <div class="modal">
+    <h2>Homework Plan 사진 추가</h2>
+    <div class="field">
+      <label>반 이름 *</label>
+      <input type="text" id="hwp_class" list="hw_class_list" placeholder="예: NJ1-3">
+      <datalist id="hw_class_list"></datalist>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>시작일</label>
+        <input type="date" id="hwp_start">
+      </div>
+      <div class="field">
+        <label>완료일</label>
+        <input type="date" id="hwp_end">
+      </div>
+    </div>
+    <div class="field">
+      <label>사진 파일 *</label>
+      <input type="file" id="hwp_file" accept="image/*">
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <input type="text" id="hwp_memo" placeholder="선택 입력">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="hwPhotoCancelBtn">취소</button>
+      <button class="btn btn-primary" id="hwPhotoSaveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Homework Plan 사진 보기 -->
+<div class="overlay" id="hwPhotoViewOverlay">
+  <div class="modal" style="max-width:92vw; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span id="hwPhotoViewTitle" style="font-weight:700; font-size:15px;"></span>
+      <button class="btn btn-ghost btn-sm" id="hwPhotoViewCloseBtn">닫기</button>
+    </div>
+    <img id="hwPhotoViewImg" src="" style="width:100%; border-radius:10px; display:block;">
   </div>
 </div>
 
@@ -689,26 +732,6 @@
 </div>
 
 <!-- Homework Plan 추가 모달 -->
-<div class="overlay" id="hwOverlay">
-  <div class="modal" style="max-width:600px;">
-    <h2>Homework Plan 회차 추가</h2>
-    <div class="field">
-      <label>반 이름 * (아래 회차들에 공통 적용)</label>
-      <input type="text" id="hw_class" list="hw_class_list" placeholder="예: NJ1-3">
-      <datalist id="hw_class_list"></datalist>
-    </div>
-
-    <div id="hw_rows"></div>
-
-    <button type="button" class="btn btn-ghost btn-sm" id="hw_addRowBtn" style="width:100%; justify-content:center; margin-bottom:16px;">+ 회차 한 개 더 추가</button>
-
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="hwCancelBtn">취소</button>
-      <button class="btn btn-primary" id="hwSaveBtn">저장</button>
-    </div>
-  </div>
-</div>
-
 <!-- 학원비 추가/수정 모달 -->
 <div class="overlay" id="tuitionOverlay">
   <div class="modal">
@@ -833,7 +856,6 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
   // ====== 여기에 원장님의 Supabase 정보가 이미 입력되어 있어요 ======
   const SUPABASE_URL = "https://cmiqzaiyugpavsogbaem.supabase.co";
@@ -2205,77 +2227,17 @@
     loadTextbooks();
   };
 
-  // ====== Homework Plan 관련 ======
-  const hwOverlay = document.getElementById('hwOverlay');
+  // ====== Homework Plan (사진) 관련 ======
+  const hwPhotoOverlay = document.getElementById('hwPhotoOverlay');
+  const hwPhotoViewOverlay = document.getElementById('hwPhotoViewOverlay');
   const homeworkArea = document.getElementById('homeworkArea');
   const hwClassFilter = document.getElementById('hwClassFilter');
-  let homeworkRecords = [];
-
-  function createHwRowHtml(data){
-    const date = data?.lesson_date || '';
-    const day = escapeHtml(data?.day_label || '');
-    const subject = escapeHtml(data?.subject || '');
-    const lesson = escapeHtml(data?.lesson || '');
-    const homework = escapeHtml(data?.homework || '');
-    const online = escapeHtml(data?.online_homework || '');
-    const test = escapeHtml(data?.test || '');
-    const teacher = escapeHtml(data?.teacher || '');
-    const memo = escapeHtml(data?.memo || '');
-    return `
-      <div class="hwRowBlock" style="border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; position:relative;">
-        <button type="button" class="btn btn-ghost btn-sm removeHwRowBtn" style="position:absolute; top:10px; right:10px;">삭제</button>
-        <div class="row2">
-          <div class="field">
-            <label>날짜</label>
-            <input type="date" class="hwDate" value="${date}">
-          </div>
-          <div class="field">
-            <label>요일</label>
-            <input type="text" class="hwDay" placeholder="예: 화" value="${day}">
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>과목 구분</label>
-            <input type="text" class="hwSubject" placeholder="예: Grammar, Speaking" value="${subject}">
-          </div>
-          <div class="field">
-            <label>수업 내용</label>
-            <input type="text" class="hwLesson" placeholder="예: Grammar L1" value="${lesson}">
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>숙제</label>
-            <input type="text" class="hwHomework" placeholder="예: WorkBook G1" value="${homework}">
-          </div>
-          <div class="field">
-            <label>온라인 숙제</label>
-            <input type="text" class="hwOnline" placeholder="예: Online G1" value="${online}">
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>시험</label>
-            <input type="text" class="hwTest" placeholder="예: Test L1" value="${test}">
-          </div>
-          <div class="field">
-            <label>담당 교사</label>
-            <input type="text" class="hwTeacher" placeholder="예: Annie" value="${teacher}">
-          </div>
-        </div>
-        <div class="field">
-          <label>메모</label>
-          <input type="text" class="hwMemo" value="${memo}">
-        </div>
-      </div>
-    `;
-  }
+  let homeworkPhotos = [];
 
   function fillHwClassOptions(){
     const classes = [...new Set([
       ...students.filter(s => s.class_name).map(s => s.class_name),
-      ...homeworkRecords.map(r => r.class_name)
+      ...homeworkPhotos.map(r => r.class_name)
     ])];
     const current = hwClassFilter.value;
     hwClassFilter.innerHTML = '<option value="all">전체 반</option>' + classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
@@ -2283,57 +2245,73 @@
     document.getElementById('hw_class_list').innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">`).join('');
   }
 
-  document.getElementById('openHwAddBtn').onclick = () => {
-    document.getElementById('hw_class').value = (hwClassFilter.value !== 'all') ? hwClassFilter.value : '';
-    document.getElementById('hw_rows').innerHTML = createHwRowHtml({ lesson_date: todayStr() });
-    hwOverlay.classList.add('show');
+  document.getElementById('openHwPhotoAddBtn').onclick = () => {
+    fillHwClassOptions();
+    document.getElementById('hwp_class').value = (hwClassFilter.value !== 'all') ? hwClassFilter.value : '';
+    document.getElementById('hwp_start').value = '';
+    document.getElementById('hwp_end').value = '';
+    document.getElementById('hwp_file').value = '';
+    document.getElementById('hwp_memo').value = '';
+    hwPhotoOverlay.classList.add('show');
   };
-  document.getElementById('hwCancelBtn').onclick = () => hwOverlay.classList.remove('show');
-  hwOverlay.addEventListener('click', (e) => { if(e.target === hwOverlay) hwOverlay.classList.remove('show'); });
+  document.getElementById('hwPhotoCancelBtn').onclick = () => hwPhotoOverlay.classList.remove('show');
+  hwPhotoOverlay.addEventListener('click', (e) => { if(e.target === hwPhotoOverlay) hwPhotoOverlay.classList.remove('show'); });
 
-  document.getElementById('hw_addRowBtn').onclick = () => {
-    document.getElementById('hw_rows').insertAdjacentHTML('beforeend', createHwRowHtml({ lesson_date: todayStr() }));
-  };
-
-  document.getElementById('hw_rows').addEventListener('click', (e) => {
-    if(e.target.classList.contains('removeHwRowBtn')){
-      const container = document.getElementById('hw_rows');
-      if(container.children.length > 1){
-        e.target.closest('.hwRowBlock').remove();
-      } else {
-        showToast('최소 한 회차는 있어야 해요');
-      }
-    }
-  });
-
-  document.getElementById('hwSaveBtn').onclick = async () => {
-    const className = document.getElementById('hw_class').value.trim();
+  document.getElementById('hwPhotoSaveBtn').onclick = async () => {
+    const className = document.getElementById('hwp_class').value.trim();
+    const file = document.getElementById('hwp_file').files[0];
     if(!className){ showToast('반 이름을 입력해주세요'); return; }
+    if(!file){ showToast('사진 파일을 선택해주세요'); return; }
 
-    const blocks = [...document.querySelectorAll('#hw_rows .hwRowBlock')];
-    const payloads = blocks.map(block => ({
-      class_name: className,
-      lesson_date: block.querySelector('.hwDate').value || null,
-      day_label: block.querySelector('.hwDay').value || null,
-      subject: block.querySelector('.hwSubject').value || null,
-      lesson: block.querySelector('.hwLesson').value || null,
-      homework: block.querySelector('.hwHomework').value || null,
-      online_homework: block.querySelector('.hwOnline').value || null,
-      test: block.querySelector('.hwTest').value || null,
-      teacher: block.querySelector('.hwTeacher').value || null,
-      memo: block.querySelector('.hwMemo').value || null,
-    }));
+    const saveBtn = document.getElementById('hwPhotoSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '업로드 중...';
 
-    const { error } = await sb.from('homework_plans').insert(payloads);
-    if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast(`${payloads.length}개 회차가 저장됐어요`);
-    hwOverlay.classList.remove('show');
-    loadHomeworkPlans();
+    try {
+      const safeClass = className.replace(/[^a-zA-Z0-9가-힣_-]/g, '_');
+      const ext = file.name.split('.').pop();
+      const filePath = `${safeClass}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await sb.storage.from('homework-photos').upload(filePath, file);
+      if(uploadError){ showToast('업로드 실패: ' + uploadError.message); return; }
+
+      const { data: urlData } = sb.storage.from('homework-photos').getPublicUrl(filePath);
+
+      const payload = {
+        class_name: className,
+        period_start: document.getElementById('hwp_start').value || null,
+        period_end: document.getElementById('hwp_end').value || null,
+        image_path: filePath,
+        image_url: urlData.publicUrl,
+        memo: document.getElementById('hwp_memo').value || null,
+      };
+
+      const { error: insertError } = await sb.from('homework_plan_photos').insert(payload);
+      if(insertError){ showToast('저장 실패: ' + insertError.message); return; }
+
+      showToast('사진이 저장됐어요');
+      hwPhotoOverlay.classList.remove('show');
+      loadHomeworkPlans();
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = '저장';
+    }
   };
 
-  async function deleteHomeworkPlan(id){
-    if(!confirm('이 회차를 삭제할까요?')) return;
-    const { error } = await sb.from('homework_plans').delete().eq('id', id);
+  function openHwPhotoView(r){
+    const student = null;
+    const periodLabel = (r.period_start || r.period_end) ? `${r.period_start || '-'} ~ ${r.period_end || '-'}` : '기간 미지정';
+    document.getElementById('hwPhotoViewTitle').textContent = `${r.class_name} · ${periodLabel}`;
+    document.getElementById('hwPhotoViewImg').src = r.image_url;
+    hwPhotoViewOverlay.classList.add('show');
+  }
+  document.getElementById('hwPhotoViewCloseBtn').onclick = () => hwPhotoViewOverlay.classList.remove('show');
+  hwPhotoViewOverlay.addEventListener('click', (e) => { if(e.target === hwPhotoViewOverlay) hwPhotoViewOverlay.classList.remove('show'); });
+
+  async function deleteHwPhoto(r){
+    if(!confirm('이 사진을 삭제할까요?')) return;
+    await sb.storage.from('homework-photos').remove([r.image_path]);
+    const { error } = await sb.from('homework_plan_photos').delete().eq('id', r.id);
     if(error){ showToast('삭제 실패: ' + error.message); return; }
     showToast('삭제됐어요');
     loadHomeworkPlans();
@@ -2344,217 +2322,49 @@
       const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
       students = data || [];
     }
-    const { data, error } = await sb.from('homework_plans').select('*').order('lesson_date', { ascending: true });
+    const { data, error } = await sb.from('homework_plan_photos').select('*').order('period_start', { ascending: false });
     if(error){
       homeworkArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
       return;
     }
-    homeworkRecords = data || [];
+    homeworkPhotos = data || [];
     fillHwClassOptions();
     renderHomeworkPlans();
   }
 
   function renderHomeworkPlans(){
     const filterClass = hwClassFilter.value;
-    const filtered = homeworkRecords.filter(r => filterClass === 'all' || r.class_name === filterClass);
+    const filtered = homeworkPhotos.filter(r => filterClass === 'all' || r.class_name === filterClass);
     if(!filtered.length){
-      homeworkArea.innerHTML = `<div class="empty"><div class="big">📋</div>등록된 Homework Plan이 없어요. [+ 회차 추가]로 시작해보세요.</div>`;
+      homeworkArea.innerHTML = `<div class="empty"><div class="big">🖼️</div>등록된 Homework Plan 사진이 없어요. [+ 사진 추가]로 시작해보세요.</div>`;
       return;
     }
-    const table = document.createElement('table');
-    table.innerHTML = `<thead><tr>
-      <th>반</th><th>날짜</th><th>요일</th><th>과목</th><th>수업내용</th><th>숙제</th><th>온라인</th><th>시험</th><th>교사</th><th>관리</th>
-    </tr></thead>`;
-    const tb = document.createElement('tbody');
-    filtered.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td data-label="반" class="name-cell">${escapeHtml(r.class_name)}</td>
-        <td data-label="날짜">${r.lesson_date || '-'}</td>
-        <td data-label="요일">${escapeHtml(r.day_label || '-')}</td>
-        <td data-label="과목">${escapeHtml(r.subject || '-')}</td>
-        <td data-label="수업내용">${escapeHtml(r.lesson || '-')}</td>
-        <td data-label="숙제">${escapeHtml(r.homework || '-')}</td>
-        <td data-label="온라인">${escapeHtml(r.online_homework || '-')}</td>
-        <td data-label="시험">${escapeHtml(r.test || '-')}</td>
-        <td data-label="교사">${escapeHtml(r.teacher || '-')}</td>
-        <td data-label="관리">
-          <button class="btn btn-danger btn-sm delHwBtn">삭제</button>
-        </td>
-      `;
-      tr.querySelector('.delHwBtn').onclick = () => deleteHomeworkPlan(r.id);
-      tb.appendChild(tr);
-    });
-    table.appendChild(tb);
+
     homeworkArea.innerHTML = '';
-    homeworkArea.appendChild(table);
+    const list = document.createElement('div');
+    filtered.forEach(r => {
+      const periodLabel = (r.period_start || r.period_end) ? `${r.period_start || '-'} ~ ${r.period_end || '-'}` : '기간 미지정';
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:14px; padding:14px; border:1px solid var(--line); border-radius:10px; margin-bottom:10px; cursor:pointer;';
+      row.innerHTML = `
+        <img src="${r.image_url}" style="width:56px; height:56px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700;">${escapeHtml(r.class_name)}</div>
+          <div style="font-size:13px; color:var(--ink-soft);">${periodLabel}${r.memo ? ' · ' + escapeHtml(r.memo) : ''}</div>
+        </div>
+        <button class="btn btn-danger btn-sm delHwPhotoBtn">삭제</button>
+      `;
+      row.addEventListener('click', (e) => {
+        if(e.target.classList.contains('delHwPhotoBtn')) return;
+        openHwPhotoView(r);
+      });
+      row.querySelector('.delHwPhotoBtn').onclick = (e) => { e.stopPropagation(); deleteHwPhoto(r); };
+      list.appendChild(row);
+    });
+    homeworkArea.appendChild(list);
   }
 
   hwClassFilter.addEventListener('change', renderHomeworkPlans);
-
-  // 엑셀 업로드
-  document.getElementById('hwUploadBtn').onclick = () => {
-    document.getElementById('hwFileInput').click();
-  };
-
-  // 요일 판별용 키워드
-  const DAY_KEYWORDS = [
-    ['MON', '월'], ['TUE', '화'], ['WED', '수'], ['THUR', '목'], ['THU', '목'],
-    ['FRI', '금'], ['SAT', '토'], ['SUN', '일']
-  ];
-  // 과목 판별용 키워드 (수업내용 텍스트에 포함되어 있으면 그 과목으로 인식)
-  const SUBJECT_KEYWORDS = ['Grammar', 'Word&Writing', 'Word & Writing', 'Speaking', 'Reading', 'Listening', 'Phonics', 'Writing', 'Vocabulary', 'Debate'];
-
-  function isValidTeacherName(text){
-    const t = String(text || '').trim();
-    if(!t || t.length > 20) return false;
-    if(/\d/.test(t)) return false;
-    if(t.includes(':') || t.includes('~')) return false;
-    return true;
-  }
-
-  function detectDayLabel(text){
-    if(!text) return null;
-    const upper = String(text).toUpperCase();
-    for(const [en, ko] of DAY_KEYWORDS){
-      if(upper.includes(en)) return ko;
-    }
-    return null;
-  }
-  function detectSubject(text){
-    if(!text) return null;
-    for(const kw of SUBJECT_KEYWORDS){
-      if(String(text).includes(kw)) return kw;
-    }
-    return null;
-  }
-  function extractDateParts(text, fallbackYear){
-    if(!text) return null;
-    const m = String(text).match(/(\d{1,2})\s*\.\s*(\d{1,2})/);
-    if(!m) return null;
-    const month = Number(m[1]);
-    const day = Number(m[2]);
-    if(month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return `${fallbackYear}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  }
-
-  // 시트 하나(원본 가로형 Homework Plan)를 세로형 레코드 배열로 변환
-  function parseWideHomeworkSheet(sheet, sheetName){
-    const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
-    if(!grid.length) return [];
-
-    // 전체 텍스트에서 4자리 연도 추출 (없으면 오늘 연도)
-    let year = new Date().getFullYear();
-    for(const row of grid){
-      for(const cell of row){
-        const m = String(cell).match(/(20\d{2})[.\-]\d{1,2}[.\-]\d{1,2}/);
-        if(m){ year = Number(m[1]); break; }
-      }
-      if(year !== new Date().getFullYear()) break;
-    }
-
-    // 반 이름: 시트 이름을 기본값으로 사용
-    const className = sheetName.trim();
-
-    // "Teacher" 라벨이 있는 행 찾기 → 열별 교사 매핑
-    const teacherByCol = {};
-    grid.forEach(row => {
-      const first = String(row[0] || '').trim().toLowerCase();
-      if(first === 'teacher'){
-        row.forEach((val, c) => {
-          if(c > 0 && isValidTeacherName(val)) teacherByCol[c] = String(val).trim();
-        });
-      }
-    });
-
-    // "DATE" 라벨이 있는 행(주차 블록 시작) 찾기
-    const records = [];
-    grid.forEach((row, r) => {
-      const first = String(row[0] || '').trim().toUpperCase();
-      if(first !== 'DATE') return;
-
-      const lessonRow = grid[r+1] || [];
-      const hwRow = grid[r+2] || [];
-      const onlineRow = grid[r+3] || [];
-      const testRow = grid[r+4] || [];
-
-      const maxCol = Math.max(row.length, lessonRow.length, hwRow.length, onlineRow.length, testRow.length);
-
-      // 이 블록에서 날짜/요일이 적힌 "기준 열" 목록
-      const anchors = [];
-      for(let c = 1; c < maxCol; c++){
-        const val = row[c];
-        if(val && String(val).trim()){
-          anchors.push({ col: c, text: String(val).trim() });
-        }
-      }
-      if(!anchors.length) return;
-
-      for(let c = 1; c < maxCol; c++){
-        const lessonVal = String(lessonRow[c] || '').trim();
-        const hwVal = String(hwRow[c] || '').trim();
-        const onlineVal = String(onlineRow[c] || '').trim();
-        const testVal = String(testRow[c] || '').trim();
-        if(!lessonVal && !hwVal && !onlineVal && !testVal) continue;
-
-        // 가장 가까운 왼쪽(또는 같은) 기준 열 찾기
-        let anchor = anchors[0];
-        for(const a of anchors){ if(a.col <= c) anchor = a; else break; }
-
-        const dayLabel = detectDayLabel(anchor.text);
-        const lessonDate = extractDateParts(anchor.text, year);
-        const subject = detectSubject(lessonVal) || detectSubject(hwVal) || detectSubject(onlineVal);
-        const teacher = teacherByCol[c] || null;
-
-        records.push({
-          class_name: className,
-          lesson_date: lessonDate,
-          day_label: dayLabel,
-          subject: subject,
-          lesson: lessonVal || null,
-          homework: hwVal || null,
-          online_homework: onlineVal || null,
-          test: testVal || null,
-          teacher: teacher,
-          memo: null,
-        });
-      }
-    });
-
-    return records;
-  }
-
-  document.getElementById('hwFileInput').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
-
-      let payloads = [];
-      workbook.SheetNames.forEach(sheetName => {
-        const sheet = workbook.Sheets[sheetName];
-        payloads = payloads.concat(parseWideHomeworkSheet(sheet, sheetName));
-      });
-
-      if(!payloads.length){
-        showToast('회차를 찾지 못했어요. DATE/LESSON/HOMEWORK/Online/TEST 형식의 표인지 확인해주세요.');
-        e.target.value = '';
-        return;
-      }
-
-      const { error } = await sb.from('homework_plans').insert(payloads);
-      if(error){ showToast('업로드 실패: ' + error.message); e.target.value = ''; return; }
-
-      showToast(`${payloads.length}개 회차가 업로드됐어요. 목록에서 내용을 한번 확인해주세요.`);
-      e.target.value = '';
-      loadHomeworkPlans();
-    } catch(err){
-      showToast('엑셀 파일을 읽지 못했어요: ' + err.message);
-      e.target.value = '';
-    }
-  });
 
   // ====== 로그인 관련 ======
   const loginScreen = document.getElementById('loginScreen');
