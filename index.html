@@ -380,7 +380,6 @@
           <option value="all">전체 반</option>
         </select>
         <input type="file" id="hwFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
-        <button class="btn btn-ghost" id="hwDownloadTemplateBtn">📄 엑셀 양식 받기</button>
         <button class="btn btn-ghost" id="hwUploadBtn">📤 엑셀로 업로드</button>
         <button class="btn btn-primary" id="openHwAddBtn" style="margin-left:auto;">+ 회차 추가</button>
       </div>
@@ -2206,8 +2205,6 @@
     loadTextbooks();
   };
 
-  const HW_TEMPLATE_B64 = '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';
-
   // ====== Homework Plan 관련 ======
   const hwOverlay = document.getElementById('hwOverlay');
   const homeworkArea = document.getElementById('homeworkArea');
@@ -2395,27 +2392,137 @@
 
   hwClassFilter.addEventListener('change', renderHomeworkPlans);
 
-  // 엑셀 양식 다운로드
-  document.getElementById('hwDownloadTemplateBtn').onclick = () => {
-    const byteChars = atob(HW_TEMPLATE_B64);
-    const byteNumbers = new Array(byteChars.length);
-    for(let i = 0; i < byteChars.length; i++){ byteNumbers[i] = byteChars.charCodeAt(i); }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'homework_plan_template.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   // 엑셀 업로드
   document.getElementById('hwUploadBtn').onclick = () => {
     document.getElementById('hwFileInput').click();
   };
+
+  // 요일 판별용 키워드
+  const DAY_KEYWORDS = [
+    ['MON', '월'], ['TUE', '화'], ['WED', '수'], ['THUR', '목'], ['THU', '목'],
+    ['FRI', '금'], ['SAT', '토'], ['SUN', '일']
+  ];
+  // 과목 판별용 키워드 (수업내용 텍스트에 포함되어 있으면 그 과목으로 인식)
+  const SUBJECT_KEYWORDS = ['Grammar', 'Word&Writing', 'Word & Writing', 'Speaking', 'Reading', 'Listening', 'Phonics', 'Writing', 'Vocabulary', 'Debate'];
+
+  function isValidTeacherName(text){
+    const t = String(text || '').trim();
+    if(!t || t.length > 20) return false;
+    if(/\d/.test(t)) return false;
+    if(t.includes(':') || t.includes('~')) return false;
+    return true;
+  }
+
+  function detectDayLabel(text){
+    if(!text) return null;
+    const upper = String(text).toUpperCase();
+    for(const [en, ko] of DAY_KEYWORDS){
+      if(upper.includes(en)) return ko;
+    }
+    return null;
+  }
+  function detectSubject(text){
+    if(!text) return null;
+    for(const kw of SUBJECT_KEYWORDS){
+      if(String(text).includes(kw)) return kw;
+    }
+    return null;
+  }
+  function extractDateParts(text, fallbackYear){
+    if(!text) return null;
+    const m = String(text).match(/(\d{1,2})\s*\.\s*(\d{1,2})/);
+    if(!m) return null;
+    const month = Number(m[1]);
+    const day = Number(m[2]);
+    if(month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return `${fallbackYear}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+
+  // 시트 하나(원본 가로형 Homework Plan)를 세로형 레코드 배열로 변환
+  function parseWideHomeworkSheet(sheet, sheetName){
+    const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
+    if(!grid.length) return [];
+
+    // 전체 텍스트에서 4자리 연도 추출 (없으면 오늘 연도)
+    let year = new Date().getFullYear();
+    for(const row of grid){
+      for(const cell of row){
+        const m = String(cell).match(/(20\d{2})[.\-]\d{1,2}[.\-]\d{1,2}/);
+        if(m){ year = Number(m[1]); break; }
+      }
+      if(year !== new Date().getFullYear()) break;
+    }
+
+    // 반 이름: 시트 이름을 기본값으로 사용
+    const className = sheetName.trim();
+
+    // "Teacher" 라벨이 있는 행 찾기 → 열별 교사 매핑
+    const teacherByCol = {};
+    grid.forEach(row => {
+      const first = String(row[0] || '').trim().toLowerCase();
+      if(first === 'teacher'){
+        row.forEach((val, c) => {
+          if(c > 0 && isValidTeacherName(val)) teacherByCol[c] = String(val).trim();
+        });
+      }
+    });
+
+    // "DATE" 라벨이 있는 행(주차 블록 시작) 찾기
+    const records = [];
+    grid.forEach((row, r) => {
+      const first = String(row[0] || '').trim().toUpperCase();
+      if(first !== 'DATE') return;
+
+      const lessonRow = grid[r+1] || [];
+      const hwRow = grid[r+2] || [];
+      const onlineRow = grid[r+3] || [];
+      const testRow = grid[r+4] || [];
+
+      const maxCol = Math.max(row.length, lessonRow.length, hwRow.length, onlineRow.length, testRow.length);
+
+      // 이 블록에서 날짜/요일이 적힌 "기준 열" 목록
+      const anchors = [];
+      for(let c = 1; c < maxCol; c++){
+        const val = row[c];
+        if(val && String(val).trim()){
+          anchors.push({ col: c, text: String(val).trim() });
+        }
+      }
+      if(!anchors.length) return;
+
+      for(let c = 1; c < maxCol; c++){
+        const lessonVal = String(lessonRow[c] || '').trim();
+        const hwVal = String(hwRow[c] || '').trim();
+        const onlineVal = String(onlineRow[c] || '').trim();
+        const testVal = String(testRow[c] || '').trim();
+        if(!lessonVal && !hwVal && !onlineVal && !testVal) continue;
+
+        // 가장 가까운 왼쪽(또는 같은) 기준 열 찾기
+        let anchor = anchors[0];
+        for(const a of anchors){ if(a.col <= c) anchor = a; else break; }
+
+        const dayLabel = detectDayLabel(anchor.text);
+        const lessonDate = extractDateParts(anchor.text, year);
+        const subject = detectSubject(lessonVal) || detectSubject(hwVal) || detectSubject(onlineVal);
+        const teacher = teacherByCol[c] || null;
+
+        records.push({
+          class_name: className,
+          lesson_date: lessonDate,
+          day_label: dayLabel,
+          subject: subject,
+          lesson: lessonVal || null,
+          homework: hwVal || null,
+          online_homework: onlineVal || null,
+          test: testVal || null,
+          teacher: teacher,
+          memo: null,
+        });
+      }
+    });
+
+    return records;
+  }
 
   document.getElementById('hwFileInput').addEventListener('change', async (e) => {
     const file = e.target.files[0];
@@ -2423,47 +2530,16 @@
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
-      const sheetName = workbook.SheetNames.find(n => n !== '작성 안내') || workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: false });
 
-      if(!rows.length){
-        showToast('엑셀에 데이터가 없어요');
-        e.target.value = '';
-        return;
-      }
-
-      function toDateStr(val){
-        if(!val) return null;
-        if(val instanceof Date){
-          return val.getFullYear() + '-' + String(val.getMonth()+1).padStart(2,'0') + '-' + String(val.getDate()).padStart(2,'0');
-        }
-        const s = String(val).trim();
-        return s || null;
-      }
-
-      const payloads = [];
-      const skipped = [];
-      rows.forEach((row, idx) => {
-        const className = String(row['반'] || '').trim();
-        if(!className){ skipped.push(idx + 2); return; }
-        payloads.push({
-          class_name: className,
-          lesson_date: toDateStr(row['날짜']),
-          day_label: String(row['요일'] || '').trim() || null,
-          subject: String(row['과목'] || '').trim() || null,
-          lesson: String(row['수업내용'] || '').trim() || null,
-          homework: String(row['숙제'] || '').trim() || null,
-          online_homework: String(row['온라인숙제'] || '').trim() || null,
-          test: String(row['시험'] || '').trim() || null,
-          teacher: String(row['교사'] || '').trim() || null,
-          memo: String(row['메모'] || '').trim() || null,
-        });
+      let payloads = [];
+      workbook.SheetNames.forEach(sheetName => {
+        const sheet = workbook.Sheets[sheetName];
+        payloads = payloads.concat(parseWideHomeworkSheet(sheet, sheetName));
       });
 
       if(!payloads.length){
-        showToast('반 이름이 채워진 행이 없어요. 양식을 확인해주세요.');
+        showToast('회차를 찾지 못했어요. DATE/LESSON/HOMEWORK/Online/TEST 형식의 표인지 확인해주세요.');
         e.target.value = '';
         return;
       }
@@ -2471,9 +2547,7 @@
       const { error } = await sb.from('homework_plans').insert(payloads);
       if(error){ showToast('업로드 실패: ' + error.message); e.target.value = ''; return; }
 
-      let msg = `${payloads.length}개 회차가 업로드됐어요`;
-      if(skipped.length) msg += ` (반 이름 없는 ${skipped.length}개 행은 건너뜀)`;
-      showToast(msg);
+      showToast(`${payloads.length}개 회차가 업로드됐어요. 목록에서 내용을 한번 확인해주세요.`);
       e.target.value = '';
       loadHomeworkPlans();
     } catch(err){
