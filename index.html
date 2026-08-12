@@ -600,7 +600,7 @@
 
 <!-- 반 전체 일괄 시험 입력 모달 -->
 <div class="overlay" id="gradeBulkOverlay">
-  <div class="modal" style="max-width:600px;">
+  <div class="modal" style="max-width:640px;">
     <h2>반 전체 시험 한번에 추가</h2>
     <div class="row2">
       <div class="field">
@@ -622,23 +622,14 @@
         <input type="text" id="bulk_range" placeholder="예: Unit 5-6">
       </div>
     </div>
-    <div class="row2">
-      <div class="field">
-        <label>시험 종류</label>
-        <input type="text" id="bulk_examtype" placeholder="예: 단어시험">
-      </div>
-      <div class="field">
-        <label>만점</label>
-        <input type="number" id="bulk_maxscore" value="100">
-      </div>
-    </div>
     <div class="field">
       <label>오늘 배운 내용</label>
       <input type="text" id="bulk_lessonmemo" placeholder="예: 과거시제 문법 설명">
     </div>
 
-    <p style="font-size:13px; font-weight:700; color:var(--ink-soft); margin:18px 0 8px;">학생별 점수 입력</p>
-    <div id="bulk_studentRows"></div>
+    <div id="bulk_subjectBlocks"></div>
+
+    <button type="button" class="btn btn-ghost btn-sm" id="bulk_addSubjectBtn" style="width:100%; justify-content:center; margin-bottom:16px;">+ 시험 과목 추가</button>
 
     <div class="modal-actions">
       <button class="btn btn-ghost" id="gradeBulkCancelBtn">취소</button>
@@ -1947,24 +1938,23 @@
     renderGrades();
   });
 
-  // ====== 반 전체 일괄 성적 입력 ======
+  // ====== 반 전체 일괄 성적 입력 (여러 과목 지원) ======
   const gradeBulkOverlay = document.getElementById('gradeBulkOverlay');
   const bulkClassSelect = document.getElementById('bulk_class');
-  const bulkStudentRows = document.getElementById('bulk_studentRows');
+  const bulkSubjectBlocks = document.getElementById('bulk_subjectBlocks');
 
   function fillBulkClassOptions(){
     const classes = [...new Set(students.filter(s => s.status === '재원' && s.class_name).map(s => s.class_name))];
     bulkClassSelect.innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   }
 
-  function renderBulkStudentRows(){
+  function buildStudentRowsHtml(){
     const cls = bulkClassSelect.value;
     const classStudents = students.filter(s => s.status === '재원' && s.class_name === cls);
     if(!classStudents.length){
-      bulkStudentRows.innerHTML = `<p style="color:var(--ink-soft); font-size:13.5px;">이 반에 재원생이 없어요.</p>`;
-      return;
+      return `<p style="color:var(--ink-soft); font-size:13.5px;">이 반에 재원생이 없어요.</p>`;
     }
-    bulkStudentRows.innerHTML = classStudents.map(s => `
+    return classStudents.map(s => `
       <div class="bulkStudentRow" data-student-id="${s.id}" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
         <div style="width:90px; font-weight:700; font-size:13.5px;">${escapeHtml(s.name)}</div>
         <input type="number" class="bulkScore" placeholder="점수" style="flex:1; font-family:inherit; font-size:14px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg);">
@@ -1978,51 +1968,97 @@
     `).join('');
   }
 
+  function createBulkSubjectBlockHtml(){
+    return `
+      <div class="bulkSubjectBlock" style="border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:14px; position:relative;">
+        <button type="button" class="btn btn-ghost btn-sm removeSubjectBtn" style="position:absolute; top:10px; right:10px;">삭제</button>
+        <div class="row2">
+          <div class="field">
+            <label>시험 종류</label>
+            <input type="text" class="subjExamType" placeholder="예: 단어시험">
+          </div>
+          <div class="field">
+            <label>만점</label>
+            <input type="number" class="subjMaxScore" value="100">
+          </div>
+        </div>
+        <p style="font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:10px 0 8px;">학생별 점수</p>
+        <div class="subjStudentRows">${buildStudentRowsHtml()}</div>
+      </div>
+    `;
+  }
+
+  function addBulkSubjectBlock(){
+    bulkSubjectBlocks.insertAdjacentHTML('beforeend', createBulkSubjectBlockHtml());
+  }
+
+  function refreshAllBulkSubjectBlocks(){
+    document.querySelectorAll('#bulk_subjectBlocks .subjStudentRows').forEach(el => {
+      el.innerHTML = buildStudentRowsHtml();
+    });
+  }
+
   document.getElementById('openGradeBulkBtn').onclick = () => {
     fillBulkClassOptions();
     document.getElementById('bulk_date').value = todayStr();
     document.getElementById('bulk_textbook').value = '';
     document.getElementById('bulk_range').value = '';
-    document.getElementById('bulk_examtype').value = '';
-    document.getElementById('bulk_maxscore').value = 100;
     document.getElementById('bulk_lessonmemo').value = '';
-    renderBulkStudentRows();
+    bulkSubjectBlocks.innerHTML = '';
+    addBulkSubjectBlock();
     gradeBulkOverlay.classList.add('show');
   };
   document.getElementById('gradeBulkCancelBtn').onclick = () => gradeBulkOverlay.classList.remove('show');
   gradeBulkOverlay.addEventListener('click', (e) => { if(e.target === gradeBulkOverlay) gradeBulkOverlay.classList.remove('show'); });
-  bulkClassSelect.addEventListener('change', renderBulkStudentRows);
+  bulkClassSelect.addEventListener('change', refreshAllBulkSubjectBlocks);
+  document.getElementById('bulk_addSubjectBtn').onclick = addBulkSubjectBlock;
+
+  bulkSubjectBlocks.addEventListener('click', (e) => {
+    if(e.target.classList.contains('removeSubjectBtn')){
+      if(bulkSubjectBlocks.children.length > 1){
+        e.target.closest('.bulkSubjectBlock').remove();
+      } else {
+        showToast('최소 한 과목은 있어야 해요');
+      }
+    }
+  });
 
   document.getElementById('gradeBulkSaveBtn').onclick = async () => {
     const examDate = document.getElementById('bulk_date').value || todayStr();
     const textbook = document.getElementById('bulk_textbook').value || null;
     const unitRange = document.getElementById('bulk_range').value || null;
-    const examType = document.getElementById('bulk_examtype').value || null;
-    const maxScore = document.getElementById('bulk_maxscore').value === '' ? 100 : Number(document.getElementById('bulk_maxscore').value);
     const lessonMemo = document.getElementById('bulk_lessonmemo').value || null;
 
-    const rows = [...document.querySelectorAll('#bulk_studentRows .bulkStudentRow')];
-    if(!rows.length){ showToast('반에 학생이 없어요'); return; }
+    const subjectBlocks = [...document.querySelectorAll('#bulk_subjectBlocks .bulkSubjectBlock')];
+    if(!subjectBlocks.length){ showToast('시험 과목을 추가해주세요'); return; }
 
-    const payloads = rows.map(row => {
-      const scoreVal = row.querySelector('.bulkScore').value;
-      return {
-        student_id: row.dataset.studentId,
-        exam_date: examDate,
-        textbook,
-        unit_range: unitRange,
-        exam_type: examType,
-        lesson_memo: lessonMemo,
-        score: scoreVal === '' ? null : Number(scoreVal),
-        max_score: maxScore,
-        result: row.querySelector('.bulkResult').value,
-        memo: row.querySelector('.bulkMemo').value || null,
-      };
-    });
+    let payloads = [];
+    for(const block of subjectBlocks){
+      const examType = block.querySelector('.subjExamType').value || null;
+      const maxScore = block.querySelector('.subjMaxScore').value === '' ? 100 : Number(block.querySelector('.subjMaxScore').value);
+      const rows = [...block.querySelectorAll('.bulkStudentRow')];
+      if(!rows.length){ showToast('반에 학생이 없어요'); return; }
+
+      rows.forEach(row => {
+        const scoreVal = row.querySelector('.bulkScore').value;
+        payloads.push({
+          student_id: row.dataset.studentId,
+          exam_date: examDate,
+          textbook,
+          unit_range: unitRange,
+          exam_type: examType,
+          lesson_memo: lessonMemo,
+          score: scoreVal === '' ? null : Number(scoreVal),
+          max_score: maxScore,
+          result: row.querySelector('.bulkResult').value,
+          memo: row.querySelector('.bulkMemo').value || null,
+        });
+      });
+    }
 
     const { error } = await sb.from('grades').insert(payloads);
     if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast(`${payloads.length}명 시험 결과가 한번에 저장됐어요`);
+    showToast(`${payloads.length}건의 시험 결과가 한번에 저장됐어요`);
     gradeBulkOverlay.classList.remove('show');
     loadGrades();
   };
