@@ -1742,11 +1742,11 @@
         <div class="row2">
           <div class="field">
             <label>점수</label>
-            <input type="number" class="examScore" placeholder="예: 85" value="${score}">
+            <input type="text" class="examScore" placeholder="예: 85 또는 A+" value="${score}">
           </div>
           <div class="field">
             <label>만점</label>
-            <input type="number" class="examMaxScore" value="${maxScore}">
+            <input type="text" class="examMaxScore" placeholder="예: 100" value="${maxScore}">
           </div>
         </div>
         <div class="field">
@@ -1813,8 +1813,8 @@
       unit_range: unitRange,
       lesson_memo: lessonMemo,
       exam_type: block.querySelector('.examType').value || null,
-      score: block.querySelector('.examScore').value === '' ? null : Number(block.querySelector('.examScore').value),
-      max_score: block.querySelector('.examMaxScore').value === '' ? 100 : Number(block.querySelector('.examMaxScore').value),
+      score: block.querySelector('.examScore').value || null,
+      max_score: block.querySelector('.examMaxScore').value || null,
       result: block.querySelector('.examResult').value,
       memo: block.querySelector('.examMemo').value || null,
     }));
@@ -1871,10 +1871,13 @@
 
     message += `[시험 결과]\n`;
     sameDay.forEach(r => {
-      const scoreLabel = (r.score === null || r.score === undefined) ? '' : ` ${r.score}/${r.max_score ?? 100}점`;
+      const scoreLabel = (r.score === null || r.score === undefined || r.score === '') ? '' : (r.max_score ? ` ${r.score}/${r.max_score}점` : ` ${r.score}점`);
       const typeLabel = r.exam_type || '시험';
       const rangeLabel = r.unit_range ? ` (${r.unit_range})` : '';
       message += `· ${typeLabel}${rangeLabel}:${scoreLabel} - ${r.result}\n`;
+      if(r.memo){
+        message += `   → ${r.memo}\n`;
+      }
     });
 
     message += `\n항상 관심 가져주셔서 감사합니다. 궁금하신 점 있으시면 언제든 연락 부탁드립니다.`;
@@ -1905,7 +1908,7 @@
     const tb = document.createElement('tbody');
     filtered.forEach(r => {
       const student = students.find(s => s.id === r.student_id);
-      const scoreLabel = (r.score === null || r.score === undefined) ? '-' : `${r.score} / ${r.max_score ?? 100}`;
+      const scoreLabel = (r.score === null || r.score === undefined || r.score === '') ? '-' : (r.max_score ? `${r.score} / ${r.max_score}` : `${r.score}`);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
@@ -1957,7 +1960,7 @@
     return classStudents.map(s => `
       <div class="bulkStudentRow" data-student-id="${s.id}" style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
         <div style="width:90px; font-weight:700; font-size:13.5px;">${escapeHtml(s.name)}</div>
-        <input type="number" class="bulkScore" placeholder="점수" style="flex:1; font-family:inherit; font-size:14px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg);">
+        <input type="text" class="bulkScore" placeholder="점수 또는 A+" style="flex:1; font-family:inherit; font-size:14px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg);">
         <select class="bulkResult" style="font-family:inherit; font-size:13.5px; padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--bg);">
           <option value="통과">통과</option>
           <option value="재시험">재시험</option>
@@ -1979,7 +1982,7 @@
           </div>
           <div class="field">
             <label>만점</label>
-            <input type="number" class="subjMaxScore" value="100">
+            <input type="text" class="subjMaxScore" placeholder="예: 100" value="100">
           </div>
         </div>
         <p style="font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:10px 0 8px;">학생별 점수</p>
@@ -2035,7 +2038,7 @@
     let payloads = [];
     for(const block of subjectBlocks){
       const examType = block.querySelector('.subjExamType').value || null;
-      const maxScore = block.querySelector('.subjMaxScore').value === '' ? 100 : Number(block.querySelector('.subjMaxScore').value);
+      const maxScore = block.querySelector('.subjMaxScore').value || null;
       const rows = [...block.querySelectorAll('.bulkStudentRow')];
       if(!rows.length){ showToast('반에 학생이 없어요'); return; }
 
@@ -2048,7 +2051,7 @@
           unit_range: unitRange,
           exam_type: examType,
           lesson_memo: lessonMemo,
-          score: scoreVal === '' ? null : Number(scoreVal),
+          score: scoreVal || null,
           max_score: maxScore,
           result: row.querySelector('.bulkResult').value,
           memo: row.querySelector('.bulkMemo').value || null,
