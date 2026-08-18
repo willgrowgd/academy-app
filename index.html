@@ -263,7 +263,7 @@
         </select>
       </div>
       <div id="attArea"></div>
-      <p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;">💡 아직 체크 안 한 학생은 자동으로 "출석" 처리돼요. 결석/지각/조퇴인 학생만 눌러서 바꿔주세요. (선택된 버튼을 다시 누르면 체크가 취소돼요)</p>
+      <p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;">💡 학생별로 출석/지각/결석/조퇴/보강 버튼을 눌러서 체크해주세요. (선택된 버튼을 다시 누르면 체크가 취소돼요)</p>
     </div>
   </div>
 
@@ -1191,19 +1191,6 @@
     }
     attRecords = {};
     (data || []).forEach(r => { attRecords[r.student_id] = r; });
-
-    // 아직 체크 안 한 재원생은 기본으로 "출석" 처리
-    const activeStudents = students.filter(s => s.status === '재원');
-    const missing = activeStudents.filter(s => !attRecords[s.id]);
-    if(missing.length){
-      const defaults = missing.map(s => ({ student_id: s.id, date, status: '출석' }));
-      const { data: inserted, error: insertError } = await sb.from('attendance')
-        .upsert(defaults, { onConflict: 'student_id,date' })
-        .select();
-      if(!insertError && inserted){
-        inserted.forEach(r => { attRecords[r.student_id] = r; });
-      }
-    }
 
     renderAttendance();
   }
