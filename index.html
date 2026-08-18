@@ -285,6 +285,7 @@
           <input type="text" id="tuitionSearchInput" placeholder="이름으로 검색">
         </div>
         <div style="margin-left:auto; display:flex; gap:10px;">
+          <button class="btn btn-ghost" id="openRefundCalcBtn">🧮 환불 계산기</button>
           <button class="btn btn-ghost" id="genTuitionBtn">선택한 달 일괄생성</button>
           <button class="btn btn-primary" id="openTuitionAddBtn">+ 학원비 추가</button>
         </div>
@@ -783,6 +784,55 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" id="tuitionCancelBtn">취소</button>
       <button class="btn btn-primary" id="tuitionSaveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 환불 계산기 모달 -->
+<div class="overlay" id="refundCalcOverlay">
+  <div class="modal" style="max-width:520px;">
+    <h2>학원비 환불 계산기</h2>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin-top:-8px; margin-bottom:16px;">학원법 시행령 [별표4] 반환기준에 따라 계산해요. 참고용이며, 실제 반환액은 학원 사정에 따라 다를 수 있어요.</p>
+
+    <div class="row2">
+      <div class="field">
+        <label>총 수강료 (원) *</label>
+        <input type="number" id="rc_tuition" placeholder="예: 306000">
+      </div>
+      <div class="field">
+        <label>등록 개월 수 *</label>
+        <input type="number" id="rc_months" value="1" min="1">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>수강 시작일 *</label>
+        <input type="date" id="rc_start">
+      </div>
+      <div class="field">
+        <label>수강 포기 통보일 *</label>
+        <input type="date" id="rc_notice">
+      </div>
+    </div>
+    <div class="field">
+      <label>주당 수업 요일 *</label>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="1"> 월</label>
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="2"> 화</label>
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="3"> 수</label>
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="4"> 목</label>
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="5"> 금</label>
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="6"> 토</label>
+        <label style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:600;"><input type="checkbox" class="rc_day" value="0"> 일</label>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="rc_calcBtn" style="width:100%; justify-content:center; margin:14px 0;">계산하기</button>
+
+    <div id="rc_result" style="display:none; background:var(--bg); border-radius:10px; padding:16px; font-size:13.5px; line-height:1.7;"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="refundCalcCloseBtn">닫기</button>
     </div>
   </div>
 </div>
@@ -1287,6 +1337,110 @@
   };
   document.getElementById('tuitionCancelBtn').onclick = closeTuitionModal;
   tuitionOverlay.addEventListener('click', (e) => { if(e.target === tuitionOverlay) closeTuitionModal(); });
+
+  // ====== 환불 계산기 ======
+  const refundCalcOverlay = document.getElementById('refundCalcOverlay');
+
+  document.getElementById('openRefundCalcBtn').onclick = () => {
+    document.getElementById('rc_tuition').value = '';
+    document.getElementById('rc_months').value = 1;
+    document.getElementById('rc_start').value = '';
+    document.getElementById('rc_notice').value = todayStr();
+    document.querySelectorAll('.rc_day').forEach(cb => cb.checked = false);
+    document.getElementById('rc_result').style.display = 'none';
+    refundCalcOverlay.classList.add('show');
+  };
+  document.getElementById('refundCalcCloseBtn').onclick = () => refundCalcOverlay.classList.remove('show');
+  refundCalcOverlay.addEventListener('click', (e) => { if(e.target === refundCalcOverlay) refundCalcOverlay.classList.remove('show'); });
+
+  function addMonthsDate(d, n){
+    return new Date(d.getFullYear(), d.getMonth() + n, d.getDate());
+  }
+  function countClassSessions(startD, endD, weekdaySet){
+    if(startD > endD) return 0;
+    let count = 0;
+    const d = new Date(startD);
+    while(d <= endD){
+      if(weekdaySet.has(d.getDay())) count++;
+      d.setDate(d.getDate() + 1);
+    }
+    return count;
+  }
+  function partialMonthRefund(monthlyTuition, totalSessions, elapsedSessions){
+    if(totalSessions === 0 || elapsedSessions === 0) return monthlyTuition;
+    const frac = elapsedSessions / totalSessions;
+    if(frac < 1/3) return monthlyTuition * 2/3;
+    if(frac < 1/2) return monthlyTuition * 1/2;
+    return 0;
+  }
+
+  document.getElementById('rc_calcBtn').onclick = () => {
+    const tuition = Number(document.getElementById('rc_tuition').value);
+    const months = Number(document.getElementById('rc_months').value) || 1;
+    const startStr = document.getElementById('rc_start').value;
+    const noticeStr = document.getElementById('rc_notice').value;
+    const weekdaySet = new Set([...document.querySelectorAll('.rc_day:checked')].map(cb => Number(cb.value)));
+
+    const resultBox = document.getElementById('rc_result');
+
+    if(!tuition || !startStr || !noticeStr || weekdaySet.size === 0){
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = `<span style="color:var(--danger);">총 수강료, 시작일, 통보일, 수업 요일을 모두 입력해주세요.</span>`;
+      return;
+    }
+
+    const start = new Date(startStr + 'T00:00:00');
+    const notice = new Date(noticeStr + 'T00:00:00');
+    const monthlyTuition = tuition / months;
+
+    if(notice < start){
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = `수업 시작 전 통보 → <strong>전액(${tuition.toLocaleString()}원)</strong> 반환 대상이에요.`;
+      return;
+    }
+
+    let totalRefund = 0;
+    let breakdown = [];
+    let noticeHandled = false;
+
+    for(let i = 0; i < months; i++){
+      const segStart = addMonthsDate(start, i);
+      const segEnd = new Date(addMonthsDate(start, i + 1));
+      segEnd.setDate(segEnd.getDate() - 1);
+
+      if(notice > segEnd){
+        // 이미 지나간 달 (완료됨) - 반환 없음
+        breakdown.push(`${i+1}개월차 (${fmtDate(segStart)}~${fmtDate(segEnd)}): 이미 진행됨 → 0원`);
+        continue;
+      }
+      if(notice < segStart){
+        // 아직 시작 안 한 달 - 전액
+        totalRefund += monthlyTuition;
+        breakdown.push(`${i+1}개월차 (${fmtDate(segStart)}~${fmtDate(segEnd)}): 시작 전 → 전액 ${Math.round(monthlyTuition).toLocaleString()}원`);
+        continue;
+      }
+      // 통보일이 포함된 달 (부분 계산)
+      const totalSessions = countClassSessions(segStart, segEnd, weekdaySet);
+      const elapsedSessions = countClassSessions(segStart, notice, weekdaySet);
+      const refund = partialMonthRefund(monthlyTuition, totalSessions, elapsedSessions);
+      totalRefund += refund;
+      const frac = totalSessions ? (elapsedSessions/totalSessions*100).toFixed(1) : 0;
+      breakdown.push(`${i+1}개월차 (${fmtDate(segStart)}~${fmtDate(segEnd)}): 총 ${totalSessions}회 중 ${elapsedSessions}회 진행(${frac}%) → ${Math.round(refund).toLocaleString()}원`);
+      noticeHandled = true;
+    }
+
+    totalRefund = Math.round(totalRefund);
+    resultBox.style.display = 'block';
+    resultBox.innerHTML = `
+      <div style="font-weight:800; font-size:16px; color:var(--teal-deep); margin-bottom:10px;">예상 반환액: ${totalRefund.toLocaleString()}원</div>
+      <div style="color:var(--ink-soft);">${breakdown.join('<br>')}</div>
+      <div style="margin-top:10px; font-size:12px; color:var(--ink-soft);">※ 학원법 시행령 [별표4] 기준 참고 계산이며, 실제 반환액과 다를 수 있어요.</div>
+    `;
+  };
+
+  function fmtDate(d){
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  }
 
   document.getElementById('tuitionSaveBtn').onclick = async () => {
     const studentId = document.getElementById('tf_student').value;
