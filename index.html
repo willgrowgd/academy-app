@@ -985,7 +985,7 @@
     const { data, error } = await sb
       .from('students')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('name', { ascending: true });
 
     if(error){
       tbody.innerHTML = '';
@@ -993,7 +993,7 @@
       emptyState.innerHTML = `<div class="big">⚠️</div>데이터를 불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small>`;
       return;
     }
-    students = data || [];
+    students = (data || []).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
     render();
   }
 
