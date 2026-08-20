@@ -1284,7 +1284,7 @@
     return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
   }
   tuitionMonthInput.value = currentMonthStr();
-  tuitionMonthInput.addEventListener('change', loadTuition);
+  tuitionMonthInput.addEventListener('change', renderTuition);
   tuitionStatusFilter.addEventListener('change', renderTuition);
   tuitionSearchInput.addEventListener('input', (e) => { tuitionSearch = e.target.value; renderTuition(); });
 
@@ -1472,8 +1472,7 @@
       const { data } = await sb.from('students').select('*').order('created_at', { ascending: false });
       students = data || [];
     }
-    const month = tuitionMonthInput.value;
-    const { data, error } = await sb.from('tuition').select('*').eq('month', month);
+    const { data, error } = await sb.from('tuition').select('*').order('month', { ascending: false });
     if(error){
       tuitionArea.innerHTML = `<div class="empty"><div class="big">⚠️</div>학원비 정보를 불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
       return;
@@ -1503,7 +1502,10 @@
 
   function renderTuition(){
     const filterStatus = tuitionStatusFilter.value;
-    const filtered = tuitionRecords.filter(r => {
+    const selectedMonth = tuitionMonthInput.value;
+    const monthRecords = tuitionRecords.filter(r => r.month === selectedMonth);
+
+    const filtered = (tuitionSearch ? tuitionRecords : monthRecords).filter(r => {
       const matchStatus = filterStatus === 'all' || r.status === filterStatus;
       if(!matchStatus) return false;
       if(!tuitionSearch) return true;
@@ -1511,9 +1513,9 @@
       return student && student.name.toLowerCase().includes(tuitionSearch.toLowerCase());
     });
 
-    const paidCount = tuitionRecords.filter(r => r.status === '납부완료').length;
-    const unpaidCount = tuitionRecords.filter(r => r.status === '미납').length;
-    const totalAmount = tuitionRecords.filter(r => r.status === '납부완료').reduce((sum,r) => sum + Number(r.amount||0), 0);
+    const paidCount = monthRecords.filter(r => r.status === '납부완료').length;
+    const unpaidCount = monthRecords.filter(r => r.status === '미납').length;
+    const totalAmount = monthRecords.filter(r => r.status === '납부완료').reduce((sum,r) => sum + Number(r.amount||0), 0);
     tuitionStatRow.innerHTML = `
       <div class="stat"><div class="num">${paidCount}</div><div class="label">납부완료</div></div>
       <div class="stat"><div class="num">${unpaidCount}</div><div class="label">미납</div></div>
@@ -1521,13 +1523,14 @@
     `;
 
     if(!filtered.length){
-      tuitionArea.innerHTML = `<div class="empty"><div class="big">💳</div>해당 월의 학원비 기록이 없어요. [+ 학원비 추가]로 등록해보세요.</div>`;
+      const emptyMsg = tuitionSearch ? '검색 결과가 없어요.' : '해당 월의 학원비 기록이 없어요. [+ 학원비 추가]로 등록해보세요.';
+      tuitionArea.innerHTML = `<div class="empty"><div class="big">💳</div>${emptyMsg}</div>`;
       return;
     }
 
     const table = document.createElement('table');
     table.innerHTML = `<thead><tr>
-      <th>학생</th><th>금액</th><th>상태</th><th>결제수단</th><th>수강기간</th><th>납부일</th><th>관리</th><th>메모</th>
+      <th>학생</th><th>월</th><th>금액</th><th>상태</th><th>결제수단</th><th>수강기간</th><th>납부일</th><th>관리</th><th>메모</th>
     </tr></thead>`;
     const tb = document.createElement('tbody');
 
@@ -1537,6 +1540,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td data-label="학생" class="name-cell">${escapeHtml(student ? student.name : '(삭제된 학생)')}</td>
+        <td data-label="월">${r.month || '-'}</td>
         <td data-label="금액">${Number(r.amount||0).toLocaleString()}원</td>
         <td data-label="상태"><span class="badge ${r.status === '납부완료' ? 'on' : 'off'}">${r.status}</span></td>
         <td data-label="결제수단">${r.payment_method || '-'}</td>
