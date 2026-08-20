@@ -1513,6 +1513,14 @@
       return student && student.name.toLowerCase().includes(tuitionSearch.toLowerCase());
     });
 
+    filtered.sort((a, b) => {
+      const nameA = students.find(s => s.id === a.student_id)?.name || '';
+      const nameB = students.find(s => s.id === b.student_id)?.name || '';
+      const nameCompare = nameA.localeCompare(nameB, 'ko');
+      if(nameCompare !== 0) return nameCompare;
+      return (b.month || '').localeCompare(a.month || '');
+    });
+
     const paidCount = monthRecords.filter(r => r.status === '납부완료').length;
     const unpaidCount = monthRecords.filter(r => r.status === '미납').length;
     const totalAmount = monthRecords.filter(r => r.status === '납부완료').reduce((sum,r) => sum + Number(r.amount||0), 0);
