@@ -174,6 +174,9 @@
     table{ font-size:12px; width:100%; border-collapse:collapse; }
     thead th, tbody td{ border:1px solid #ccc; padding:6px 8px; }
 
+    body.printing-att-sheet #mainScreen{ display:none !important; }
+    body.printing-att-sheet .toast{ display:none !important; }
+
     #attSheetOverlay.show{
       position:static !important; background:none !important; padding:0 !important;
       display:block !important; align-items:initial !important; justify-content:initial !important;
@@ -1411,8 +1414,14 @@
 
   document.getElementById('as_printBtn').onclick = () => {
     if(!asResult.innerHTML.trim()){ showToast('먼저 [표 만들기]로 출석부를 만들어주세요'); return; }
+    document.body.classList.add('printing-att-sheet');
     window.print();
+    // afterprint 이벤트를 지원하지 않는 환경 대비 안전장치
+    setTimeout(() => document.body.classList.remove('printing-att-sheet'), 3000);
   };
+  window.addEventListener('afterprint', () => {
+    document.body.classList.remove('printing-att-sheet');
+  });
 
   // ====== 학원비 관련 ======
   const tuitionOverlay = document.getElementById('tuitionOverlay');
