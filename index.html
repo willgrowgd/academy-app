@@ -167,12 +167,23 @@
   @media print{
     body{ background:#fff; }
     .no-print{ display:none !important; }
-    .overlay{ display:none !important; }
+    .overlay:not(#attSheetOverlay){ display:none !important; }
     .print-only-title{ display:block !important; font-size:18px; font-weight:800; margin-bottom:14px; }
     .wrap{ max-width:none; padding:0; }
     .panel{ border:none; padding:0; }
     table{ font-size:12px; width:100%; border-collapse:collapse; }
     thead th, tbody td{ border:1px solid #ccc; padding:6px 8px; }
+
+    #attSheetOverlay.show{
+      position:static !important; background:none !important; padding:0 !important;
+      display:block !important; align-items:initial !important; justify-content:initial !important;
+    }
+    #attSheetOverlay.show .modal{
+      box-shadow:none !important; max-width:none !important; max-height:none !important;
+      overflow:visible !important; padding:0 !important; width:100% !important;
+    }
+    #as_result table{ font-size:11px; }
+    #as_result th, #as_result td{ border:1px solid #999; padding:3px 4px; text-align:center; }
   }
 </style>
 </head>
@@ -276,6 +287,7 @@
         <select class="filter" id="attClassFilter">
           <option value="all">전체 반</option>
         </select>
+        <button class="btn btn-ghost" id="openAttSheetBtn" style="margin-left:auto;">📋 월별 출석부 인쇄</button>
       </div>
       <div id="attArea"></div>
       <p style="font-size:12.5px; color:var(--ink-soft); margin-top:12px;">💡 학생별로 출석/지각/결석/조퇴/보강 버튼을 눌러서 체크해주세요. (선택된 버튼을 다시 누르면 체크가 취소돼요)</p>
@@ -739,6 +751,31 @@
 </div>
 
 <!-- Homework Plan 추가 모달 -->
+<!-- 월별 출석부 모달 -->
+<div class="overlay" id="attSheetOverlay">
+  <div class="modal" style="max-width:96vw; width:auto;">
+    <h2 class="no-print">월별 출석부</h2>
+    <div class="row2 no-print">
+      <div class="field">
+        <label>반 선택 *</label>
+        <select id="as_class"></select>
+      </div>
+      <div class="field">
+        <label>월 선택 *</label>
+        <input type="month" id="as_month">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-bottom:16px;" class="no-print">
+      <button class="btn btn-primary" id="as_generateBtn">표 만들기</button>
+      <button class="btn btn-ghost" id="as_printBtn">🖨️ 인쇄</button>
+    </div>
+    <div id="as_result" style="overflow-x:auto;"></div>
+    <div class="modal-actions no-print">
+      <button class="btn btn-ghost" id="attSheetCloseBtn">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 학원비 추가/수정 모달 -->
 <div class="overlay" id="tuitionOverlay">
   <div class="modal">
@@ -1293,6 +1330,89 @@
     renderAttendance();
     showToast('체크가 지워졌어요');
   }
+
+  // ====== 월별 출석부 인쇄 ======
+  const attSheetOverlay = document.getElementById('attSheetOverlay');
+  const asClassSelect = document.getElementById('as_class');
+  const asMonthInput = document.getElementById('as_month');
+  const asResult = document.getElementById('as_result');
+  const ATT_ABBR = { '출석': '출', '지각': '지', '결석': '결', '조퇴': '조', '보강': '보' };
+
+  document.getElementById('openAttSheetBtn').onclick = () => {
+    const classes = [...new Set(students.filter(s => s.status === '재원' && s.class_name).map(s => s.class_name))];
+    asClassSelect.innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    if(attClassFilter.value !== 'all' && classes.includes(attClassFilter.value)){
+      asClassSelect.value = attClassFilter.value;
+    }
+    asMonthInput.value = currentMonthStr();
+    asResult.innerHTML = '';
+    attSheetOverlay.classList.add('show');
+  };
+  document.getElementById('attSheetCloseBtn').onclick = () => attSheetOverlay.classList.remove('show');
+  attSheetOverlay.addEventListener('click', (e) => { if(e.target === attSheetOverlay) attSheetOverlay.classList.remove('show'); });
+
+  document.getElementById('as_generateBtn').onclick = async () => {
+    const cls = asClassSelect.value;
+    const monthVal = asMonthInput.value;
+    if(!cls || !monthVal){ showToast('반과 월을 선택해주세요'); return; }
+
+    const [yearStr, monthStr] = monthVal.split('-');
+    const year = Number(yearStr), month = Number(monthStr);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const monthStart = `${monthVal}-01`;
+    const monthEnd = `${monthVal}-${String(daysInMonth).padStart(2,'0')}`;
+
+    const classStudents = students
+      .filter(s => s.class_name === cls && s.status === '재원')
+      .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+
+    if(!classStudents.length){
+      asResult.innerHTML = `<p style="color:var(--ink-soft);">이 반에 재원생이 없어요.</p>`;
+      return;
+    }
+
+    const studentIds = classStudents.map(s => s.id);
+    const { data, error } = await sb.from('attendance')
+      .select('*')
+      .in('student_id', studentIds)
+      .gte('date', monthStart)
+      .lte('date', monthEnd);
+
+    if(error){
+      asResult.innerHTML = `<p style="color:var(--danger);">불러오지 못했어요: ${escapeHtml(error.message)}</p>`;
+      return;
+    }
+
+    const map = {}; // studentId -> { day: status }
+    (data || []).forEach(r => {
+      const day = Number(r.date.split('-')[2]);
+      if(!map[r.student_id]) map[r.student_id] = {};
+      map[r.student_id][day] = r.status;
+    });
+
+    let html = `<p class="print-only-title" style="display:none;">${escapeHtml(cls)} 출석부 - ${year}년 ${month}월</p>`;
+    html += `<p style="font-weight:700; margin-bottom:10px;">${escapeHtml(cls)} · ${year}년 ${month}월 출석부</p>`;
+    html += `<table><thead><tr><th style="text-align:left;">이름</th>`;
+    for(let d = 1; d <= daysInMonth; d++){ html += `<th>${d}</th>`; }
+    html += `</tr></thead><tbody>`;
+    classStudents.forEach(s => {
+      html += `<tr><td style="text-align:left; font-weight:700; white-space:nowrap;">${escapeHtml(s.name)}</td>`;
+      for(let d = 1; d <= daysInMonth; d++){
+        const status = map[s.id]?.[d];
+        html += `<td>${status ? ATT_ABBR[status] || status : ''}</td>`;
+      }
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+    html += `<p style="font-size:12px; color:var(--ink-soft); margin-top:10px;">출:출석 · 지:지각 · 결:결석 · 조:조퇴 · 보:보강</p>`;
+
+    asResult.innerHTML = html;
+  };
+
+  document.getElementById('as_printBtn').onclick = () => {
+    if(!asResult.innerHTML.trim()){ showToast('먼저 [표 만들기]로 출석부를 만들어주세요'); return; }
+    window.print();
+  };
 
   // ====== 학원비 관련 ======
   const tuitionOverlay = document.getElementById('tuitionOverlay');
