@@ -249,6 +249,7 @@
         <select class="filter" id="statusFilter">
           <option value="all">전체 상태</option>
           <option value="재원">재원</option>
+          <option value="휴원중">휴원중</option>
           <option value="퇴원">퇴원</option>
         </select>
         <button class="btn btn-ghost" id="printStudentsBtn" style="margin-left:auto;">🖨️ 명단 인쇄</button>
@@ -919,6 +920,7 @@
         <label>상태</label>
         <select id="f_status">
           <option value="재원">재원</option>
+          <option value="휴원중">휴원중</option>
           <option value="퇴원">퇴원</option>
         </select>
       </div>
@@ -1464,7 +1466,7 @@
     const sel = document.getElementById('tf_student');
     const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
     sel.innerHTML = sorted
-      .map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`)
+      .map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status === '휴원중' ? ' (휴원중)' : (s.status !== '재원' ? ' (퇴원)' : '')}</option>`)
       .join('');
   }
 
@@ -1904,7 +1906,7 @@
 
   function fillCounselingStudentSelects(){
     const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status === '휴원중' ? ' (휴원중)' : (s.status !== '재원' ? ' (퇴원)' : '')}</option>`).join('');
     document.getElementById('cf_student').innerHTML = options;
     const current = counselingStudentFilter.value;
     counselingStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
@@ -2025,7 +2027,7 @@
 
   function fillGradeStudentSelects(){
     const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status === '휴원중' ? ' (휴원중)' : (s.status !== '재원' ? ' (퇴원)' : '')}</option>`).join('');
     document.getElementById('gf_student').innerHTML = options;
 
     const classes = [...new Set(students.filter(s => s.class_name).map(s => s.class_name))];
@@ -2042,7 +2044,7 @@
     const sorted = [...students]
       .filter(s => selectedClass === 'all' || s.class_name === selectedClass)
       .sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status === '휴원중' ? ' (휴원중)' : (s.status !== '재원' ? ' (퇴원)' : '')}</option>`).join('');
     const current = gradesStudentFilter.value;
     gradesStudentFilter.innerHTML = '<option value="all">전체 학생</option>' + options;
     if([...gradesStudentFilter.options].some(o => o.value === current)) gradesStudentFilter.value = current;
@@ -2412,7 +2414,7 @@
 
   function fillTextbookFilters(){
     const sorted = [...students].sort((a,b) => (a.status === b.status) ? 0 : (a.status === '재원' ? -1 : 1));
-    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status !== '재원' ? ' (퇴원)' : ''}</option>`).join('');
+    const options = sorted.map(s => `<option value="${s.id}">${escapeHtml(s.name)}${s.class_name ? ' · ' + escapeHtml(s.class_name) : ''}${s.status === '휴원중' ? ' (휴원중)' : (s.status !== '재원' ? ' (퇴원)' : '')}</option>`).join('');
     document.getElementById('tb_student').innerHTML = options;
 
     const currentStudent = tbStudentFilter.value;
