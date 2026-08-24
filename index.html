@@ -231,7 +231,7 @@
     <button class="btn btn-primary tabBtn" id="tabStudents">학생 명단</button>
     <button class="btn btn-ghost tabBtn" id="tabAttendance">출결 체크</button>
     <button class="btn btn-ghost tabBtn" id="tabTuition">학원비 관리</button>
-    <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리</button>
+    <button class="btn btn-ghost tabBtn" id="tabCounseling">상담 관리<span id="counselingNewBadge" style="display:none; margin-left:6px; background:var(--danger); color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:999px; vertical-align:middle;">NEW</span></button>
     <button class="btn btn-ghost tabBtn" id="tabGrades">시험 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabTextbooks">교재 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabHomework">Homework Plan</button>
@@ -1823,6 +1823,15 @@
     }
     inquiries = data || [];
     renderInquiries();
+    updateCounselingNewBadge();
+  }
+
+  function updateCounselingNewBadge(){
+    const badge = document.getElementById('counselingNewBadge');
+    if(!badge) return;
+    const todayStr2 = new Date().toDateString();
+    const hasNew = inquiries.some(r => r.created_at && new Date(r.created_at).toDateString() === todayStr2);
+    badge.style.display = hasNew ? 'inline-block' : 'none';
   }
 
   function sendInquirySms(record){
@@ -2739,6 +2748,15 @@
     loginScreen.style.display = 'none';
     mainScreen.style.display = 'block';
     loadStudents();
+    checkNewInquiryBadgeOnLoad();
+  }
+  async function checkNewInquiryBadgeOnLoad(){
+    const { data } = await sb.from('new_inquiry').select('id, created_at');
+    const badge = document.getElementById('counselingNewBadge');
+    if(!badge || !data) return;
+    const todayStr2 = new Date().toDateString();
+    const hasNew = data.some(r => r.created_at && new Date(r.created_at).toDateString() === todayStr2);
+    badge.style.display = hasNew ? 'inline-block' : 'none';
   }
   function showLogin(){
     loginScreen.style.display = 'flex';
