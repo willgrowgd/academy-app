@@ -1084,10 +1084,13 @@
 
     const total = students.length;
     const active = students.filter(s => s.status === '재원').length;
+    const onLeave = students.filter(s => s.status === '휴원중').length;
+    const withdrawn = students.filter(s => s.status === '퇴원').length;
     statRow.innerHTML = `
       <div class="stat"><div class="num">${total}</div><div class="label">전체 학생</div></div>
       <div class="stat"><div class="num">${active}</div><div class="label">재원중</div></div>
-      <div class="stat"><div class="num">${total - active}</div><div class="label">퇴원</div></div>
+      <div class="stat"><div class="num">${onLeave}</div><div class="label">휴원중</div></div>
+      <div class="stat"><div class="num">${withdrawn}</div><div class="label">퇴원</div></div>
     `;
   }
 
