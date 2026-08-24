@@ -187,6 +187,8 @@
     }
     #as_result table{ font-size:11px; }
     #as_result th, #as_result td{ border:1px solid #999; padding:3px 4px; text-align:center; }
+    .att-sheet-page{ page-break-after: always; }
+    .att-sheet-page:last-child{ page-break-after: auto; }
   }
 </style>
 </head>
@@ -758,15 +760,13 @@
 <div class="overlay" id="attSheetOverlay">
   <div class="modal" style="max-width:96vw; width:auto;">
     <h2 class="no-print">월별 출석부</h2>
-    <div class="row2 no-print">
-      <div class="field">
-        <label>반 선택 *</label>
-        <select id="as_class"></select>
-      </div>
-      <div class="field">
-        <label>월 선택 *</label>
-        <input type="month" id="as_month">
-      </div>
+    <div class="field no-print">
+      <label>반 선택 * (여러 개 선택 가능)</label>
+      <div id="as_classCheckboxes" style="display:flex; gap:12px; flex-wrap:wrap; padding:10px 12px; border:1px solid var(--line); border-radius:9px; background:var(--bg);"></div>
+    </div>
+    <div class="field no-print">
+      <label>월 선택 *</label>
+      <input type="month" id="as_month" style="max-width:200px;">
     </div>
     <div style="display:flex; gap:10px; margin-bottom:16px;" class="no-print">
       <button class="btn btn-primary" id="as_generateBtn">표 만들기</button>
@@ -1336,17 +1336,27 @@
 
   // ====== 월별 출석부 인쇄 ======
   const attSheetOverlay = document.getElementById('attSheetOverlay');
-  const asClassSelect = document.getElementById('as_class');
+  const asClassCheckboxes = document.getElementById('as_classCheckboxes');
   const asMonthInput = document.getElementById('as_month');
   const asResult = document.getElementById('as_result');
   const ATT_ABBR = { '출석': '출', '지각': '지', '결석': '결', '조퇴': '조', '보강': '보' };
 
   document.getElementById('openAttSheetBtn').onclick = () => {
     const classes = [...new Set(students.filter(s => s.status === '재원' && s.class_name).map(s => s.class_name))];
-    asClassSelect.innerHTML = classes.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    let html = `<label style="display:flex; align-items:center; gap:5px; font-size:13.5px; font-weight:800; padding-right:10px; border-right:1px solid var(--line);"><input type="checkbox" id="as_selectAll"> 전체 선택</label>`;
+    html += classes.map(c => `<label style="display:flex; align-items:center; gap:5px; font-size:13.5px; font-weight:600;"><input type="checkbox" class="as_classCheck" value="${escapeHtml(c)}"> ${escapeHtml(c)}</label>`).join('');
+    asClassCheckboxes.innerHTML = html;
+
+    document.getElementById('as_selectAll').addEventListener('change', (e) => {
+      document.querySelectorAll('.as_classCheck').forEach(cb => cb.checked = e.target.checked);
+    });
+
+    // 출결 화면에서 반을 선택해둔 상태였으면 그 반을 기본 체크
     if(attClassFilter.value !== 'all' && classes.includes(attClassFilter.value)){
-      asClassSelect.value = attClassFilter.value;
+      const target = asClassCheckboxes.querySelector(`.as_classCheck[value="${CSS.escape(attClassFilter.value)}"]`);
+      if(target) target.checked = true;
     }
+
     asMonthInput.value = currentMonthStr();
     asResult.innerHTML = '';
     attSheetOverlay.classList.add('show');
@@ -1354,10 +1364,30 @@
   document.getElementById('attSheetCloseBtn').onclick = () => attSheetOverlay.classList.remove('show');
   attSheetOverlay.addEventListener('click', (e) => { if(e.target === attSheetOverlay) attSheetOverlay.classList.remove('show'); });
 
+  function buildClassSheetHtml(cls, year, month, daysInMonth, classStudents, map){
+    let html = `<div class="att-sheet-page">`;
+    html += `<p style="font-weight:700; margin-bottom:10px;">${escapeHtml(cls)} · ${year}년 ${month}월 출석부</p>`;
+    html += `<table><thead><tr><th style="text-align:left;">이름</th>`;
+    for(let d = 1; d <= daysInMonth; d++){ html += `<th>${d}</th>`; }
+    html += `</tr></thead><tbody>`;
+    classStudents.forEach(s => {
+      html += `<tr><td style="text-align:left; font-weight:700; white-space:nowrap;">${escapeHtml(s.name)}</td>`;
+      for(let d = 1; d <= daysInMonth; d++){
+        const status = map[s.id]?.[d];
+        html += `<td>${status ? ATT_ABBR[status] || status : ''}</td>`;
+      }
+      html += `</tr>`;
+    });
+    html += `</tbody></table>`;
+    html += `<p style="font-size:12px; color:var(--ink-soft); margin-top:10px;">출:출석 · 지:지각 · 결:결석 · 조:조퇴 · 보:보강</p>`;
+    html += `</div>`;
+    return html;
+  }
+
   document.getElementById('as_generateBtn').onclick = async () => {
-    const cls = asClassSelect.value;
+    const selectedClasses = [...document.querySelectorAll('.as_classCheck:checked')].map(cb => cb.value);
     const monthVal = asMonthInput.value;
-    if(!cls || !monthVal){ showToast('반과 월을 선택해주세요'); return; }
+    if(!selectedClasses.length || !monthVal){ showToast('반과 월을 선택해주세요'); return; }
 
     const [yearStr, monthStr] = monthVal.split('-');
     const year = Number(yearStr), month = Number(monthStr);
@@ -1365,19 +1395,15 @@
     const monthStart = `${monthVal}-01`;
     const monthEnd = `${monthVal}-${String(daysInMonth).padStart(2,'0')}`;
 
-    const classStudents = students
-      .filter(s => s.class_name === cls && s.status === '재원')
-      .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
-
-    if(!classStudents.length){
-      asResult.innerHTML = `<p style="color:var(--ink-soft);">이 반에 재원생이 없어요.</p>`;
+    const allStudentIds = students.filter(s => selectedClasses.includes(s.class_name) && s.status === '재원').map(s => s.id);
+    if(!allStudentIds.length){
+      asResult.innerHTML = `<p style="color:var(--ink-soft);">선택한 반에 재원생이 없어요.</p>`;
       return;
     }
 
-    const studentIds = classStudents.map(s => s.id);
     const { data, error } = await sb.from('attendance')
       .select('*')
-      .in('student_id', studentIds)
+      .in('student_id', allStudentIds)
       .gte('date', monthStart)
       .lte('date', monthEnd);
 
@@ -1393,23 +1419,16 @@
       map[r.student_id][day] = r.status;
     });
 
-    let html = `<p class="print-only-title" style="display:none;">${escapeHtml(cls)} 출석부 - ${year}년 ${month}월</p>`;
-    html += `<p style="font-weight:700; margin-bottom:10px;">${escapeHtml(cls)} · ${year}년 ${month}월 출석부</p>`;
-    html += `<table><thead><tr><th style="text-align:left;">이름</th>`;
-    for(let d = 1; d <= daysInMonth; d++){ html += `<th>${d}</th>`; }
-    html += `</tr></thead><tbody>`;
-    classStudents.forEach(s => {
-      html += `<tr><td style="text-align:left; font-weight:700; white-space:nowrap;">${escapeHtml(s.name)}</td>`;
-      for(let d = 1; d <= daysInMonth; d++){
-        const status = map[s.id]?.[d];
-        html += `<td>${status ? ATT_ABBR[status] || status : ''}</td>`;
-      }
-      html += `</tr>`;
+    let combinedHtml = `<p class="print-only-title" style="display:none;">${year}년 ${month}월 출석부</p>`;
+    selectedClasses.forEach(cls => {
+      const classStudents = students
+        .filter(s => s.class_name === cls && s.status === '재원')
+        .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+      if(!classStudents.length) return;
+      combinedHtml += buildClassSheetHtml(cls, year, month, daysInMonth, classStudents, map);
     });
-    html += `</tbody></table>`;
-    html += `<p style="font-size:12px; color:var(--ink-soft); margin-top:10px;">출:출석 · 지:지각 · 결:결석 · 조:조퇴 · 보:보강</p>`;
 
-    asResult.innerHTML = html;
+    asResult.innerHTML = combinedHtml;
   };
 
   document.getElementById('as_printBtn').onclick = () => {
