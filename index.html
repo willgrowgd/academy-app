@@ -433,6 +433,7 @@
 
     <!-- 설명회 상세(참석자 명단) -->
     <div id="sessionDetailView" style="display:none;">
+      <div class="stat-row" id="sessionStatRow"></div>
       <div class="panel">
         <div class="toolbar">
           <button class="btn btn-ghost" id="backToSessionsBtn">← 목록으로</button>
@@ -471,28 +472,19 @@
 
 <!-- 참석자 추가/수정 모달 -->
 <div class="overlay" id="guestOverlay">
-  <div class="modal">
+  <div class="modal" style="max-width:560px;">
     <h2 id="guestModalTitle">참석자 추가</h2>
     <input type="hidden" id="gf_guestId">
     <div class="field">
-      <label>재학생 이름</label>
+      <label>재학생 이름 (아래 지인들에 공통 적용)</label>
       <input type="text" id="gf_studentName" list="gf_studentNameList" placeholder="예: 김민준 (재학생이 아니면 비워도 돼요)">
       <datalist id="gf_studentNameList"></datalist>
     </div>
-    <div class="row2">
-      <div class="field">
-        <label>지인 이름</label>
-        <input type="text" id="gf_guestName" placeholder="예: 이서준 학부모님">
-      </div>
-      <div class="field">
-        <label>지인 연락처</label>
-        <input type="text" id="gf_guestPhone" placeholder="010-0000-0000">
-      </div>
-    </div>
-    <div class="field">
-      <label>메모</label>
-      <input type="text" id="gf_guestMemo" placeholder="선택 입력">
-    </div>
+
+    <div id="gf_guestRows"></div>
+
+    <button type="button" class="btn btn-ghost btn-sm" id="gf_addGuestRowBtn" style="width:100%; justify-content:center; margin-bottom:16px;">+ 지인 한 명 더 추가</button>
+
     <div class="modal-actions">
       <button class="btn btn-ghost" id="guestCancelBtn">취소</button>
       <button class="btn btn-primary" id="guestSaveBtn">저장</button>
@@ -2887,7 +2879,7 @@
       row.innerHTML = `
         <div style="flex:1; min-width:0;">
           <div style="font-weight:700;">${escapeHtml(s.title)}</div>
-          <div style="font-size:13px; color:var(--ink-soft);">${s.event_date || '날짜 미정'} · 참석자 ${countMap[s.id] || 0}명${s.memo ? ' · ' + escapeHtml(s.memo) : ''}</div>
+          <div style="font-size:13px; color:var(--ink-soft);">${s.event_date || '날짜 미정'} · 등록 ${countMap[s.id] || 0}건${s.memo ? ' · ' + escapeHtml(s.memo) : ''}</div>
         </div>
         <button class="btn btn-ghost btn-sm editSessionBtn">수정</button>
         <button class="btn btn-danger btn-sm delSessionBtn">삭제</button>
@@ -2951,6 +2943,19 @@
     }
     sessionGuests = data || [];
     renderGuests();
+    renderSessionStats();
+  }
+
+  function renderSessionStats(){
+    const uniqueStudents = new Set(sessionGuests.filter(g => g.student_name).map(g => g.student_name));
+    const guestCount = sessionGuests.filter(g => g.guest_name).length;
+    const studentCount = uniqueStudents.size;
+    const total = studentCount + guestCount;
+    document.getElementById('sessionStatRow').innerHTML = `
+      <div class="stat"><div class="num">${studentCount}</div><div class="label">재학생</div></div>
+      <div class="stat"><div class="num">${guestCount}</div><div class="label">지인</div></div>
+      <div class="stat"><div class="num">${total}</div><div class="label">총 참석 인원</div></div>
+    `;
   }
 
   function renderGuests(){
@@ -2982,40 +2987,84 @@
     guestsArea.appendChild(table);
   }
 
+  function createGuestRowHtml(data){
+    const guestName = escapeHtml(data?.guest_name || '');
+    const guestPhone = escapeHtml(data?.guest_phone || '');
+    const memo = escapeHtml(data?.memo || '');
+    return `
+      <div class="guestRowBlock" style="border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; position:relative;">
+        <button type="button" class="btn btn-ghost btn-sm removeGuestRowBtn" style="position:absolute; top:10px; right:10px;">삭제</button>
+        <div class="row2">
+          <div class="field">
+            <label>지인 이름</label>
+            <input type="text" class="guestName" placeholder="예: 이서준 학부모님" value="${guestName}">
+          </div>
+          <div class="field">
+            <label>지인 연락처</label>
+            <input type="text" class="guestPhone" placeholder="010-0000-0000" value="${guestPhone}">
+          </div>
+        </div>
+        <div class="field">
+          <label>메모</label>
+          <input type="text" class="guestMemo" placeholder="선택 입력" value="${memo}">
+        </div>
+      </div>
+    `;
+  }
+
   function openGuestModal(rec){
     document.getElementById('gf_studentNameList').innerHTML = students.map(s => `<option value="${escapeHtml(s.name)}">`).join('');
     document.getElementById('guestModalTitle').textContent = rec ? '참석자 수정' : '참석자 추가';
     document.getElementById('gf_guestId').value = rec ? rec.id : '';
     document.getElementById('gf_studentName').value = rec?.student_name || '';
-    document.getElementById('gf_guestName').value = rec?.guest_name || '';
-    document.getElementById('gf_guestPhone').value = rec?.guest_phone || '';
-    document.getElementById('gf_guestMemo').value = rec?.memo || '';
+
+    document.getElementById('gf_guestRows').innerHTML = createGuestRowHtml(rec);
+    // 수정할 때는 한 명만 다루므로 "더 추가" 버튼 숨김
+    document.getElementById('gf_addGuestRowBtn').style.display = rec ? 'none' : 'flex';
+
     guestOverlay.classList.add('show');
   }
   document.getElementById('openGuestAddBtn').onclick = () => openGuestModal(null);
   document.getElementById('guestCancelBtn').onclick = () => guestOverlay.classList.remove('show');
   guestOverlay.addEventListener('click', (e) => { if(e.target === guestOverlay) guestOverlay.classList.remove('show'); });
 
+  document.getElementById('gf_addGuestRowBtn').onclick = () => {
+    document.getElementById('gf_guestRows').insertAdjacentHTML('beforeend', createGuestRowHtml(null));
+  };
+  document.getElementById('gf_guestRows').addEventListener('click', (e) => {
+    if(e.target.classList.contains('removeGuestRowBtn')){
+      const container = document.getElementById('gf_guestRows');
+      if(container.children.length > 1){
+        e.target.closest('.guestRowBlock').remove();
+      } else {
+        showToast('최소 한 명은 있어야 해요');
+      }
+    }
+  });
+
   document.getElementById('guestSaveBtn').onclick = async () => {
     const studentName = document.getElementById('gf_studentName').value.trim();
-    const guestName = document.getElementById('gf_guestName').value.trim();
-    if(!studentName && !guestName){ showToast('재학생 이름 또는 지인 이름을 입력해주세요'); return; }
-    const payload = {
+    const editId = document.getElementById('gf_guestId').value;
+
+    const blocks = [...document.querySelectorAll('#gf_guestRows .guestRowBlock')];
+    const payloads = blocks.map(block => ({
       session_id: currentSessionId,
       student_name: studentName || null,
-      guest_name: guestName || null,
-      guest_phone: document.getElementById('gf_guestPhone').value || null,
-      memo: document.getElementById('gf_guestMemo').value || null,
-    };
-    const editId = document.getElementById('gf_guestId').value;
+      guest_name: block.querySelector('.guestName').value.trim() || null,
+      guest_phone: block.querySelector('.guestPhone').value.trim() || null,
+      memo: block.querySelector('.guestMemo').value.trim() || null,
+    })).filter(p => p.student_name || p.guest_name);
+
+    if(!payloads.length){ showToast('재학생 이름 또는 지인 이름을 입력해주세요'); return; }
+
     let error;
     if(editId){
-      ({ error } = await sb.from('parent_session_guests').update(payload).eq('id', editId));
+      ({ error } = await sb.from('parent_session_guests').update(payloads[0]).eq('id', editId));
     } else {
-      ({ error } = await sb.from('parent_session_guests').insert(payload));
+      ({ error } = await sb.from('parent_session_guests').insert(payloads));
     }
     if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast('저장됐어요');
+    showToast(editId ? '수정됐어요' : `${payloads.length}명 등록됐어요`);
     guestOverlay.classList.remove('show');
     loadGuests(currentSessionId);
   };
