@@ -155,6 +155,22 @@
   }
   .toast.show{ opacity: 1; transform: translateX(-50%) translateY(-6px); }
 
+  .cal-grid{ display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; }
+  .cal-dow{ text-align:center; font-size:12px; font-weight:700; color: var(--ink-soft); padding-bottom:6px; }
+  .cal-cell{
+    min-height:80px; border:1px solid var(--line); border-radius:8px; padding:6px;
+    cursor:pointer; background:var(--surface); display:flex; flex-direction:column; gap:3px;
+  }
+  .cal-cell:hover{ background:var(--bg); }
+  .cal-cell.empty{ background:transparent; border:none; cursor:default; }
+  .cal-cell.today{ border:2px solid var(--teal); }
+  .cal-daynum{ font-size:12.5px; font-weight:700; }
+  .cal-event-chip{
+    font-size:10.5px; background:var(--amber-soft); color:#8A6512; border-radius:5px;
+    padding:1px 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .cal-more{ font-size:10px; color:var(--ink-soft); }
+
   @media screen and (max-width: 640px){
     .row2{ grid-template-columns: 1fr; }
     table, thead, tbody, th, td, tr{ display:block; }
@@ -236,6 +252,7 @@
     <button class="btn btn-ghost tabBtn" id="tabTextbooks">교재 관리</button>
     <button class="btn btn-ghost tabBtn" id="tabHomework">Homework Plan</button>
     <button class="btn btn-ghost tabBtn" id="tabParentSessions">학부모설명회</button>
+    <button class="btn btn-ghost tabBtn" id="tabCalendar">캘린더</button>
   </div>
 
   <div id="studentsView">
@@ -442,6 +459,40 @@
         </div>
         <div id="guestsArea"></div>
       </div>
+    </div>
+  </div>
+
+  <div id="calendarView" style="display:none;">
+    <div class="panel">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <button class="btn btn-ghost" id="calPrevBtn">◀ 이전달</button>
+        <p id="calTitle" style="font-weight:800; font-size:17px; margin:0;"></p>
+        <button class="btn btn-ghost" id="calNextBtn">다음달 ▶</button>
+      </div>
+      <div id="calGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 날짜별 일정 모달 -->
+<div class="overlay" id="calDayOverlay">
+  <div class="modal">
+    <h2 id="calDayTitle">일정</h2>
+    <div id="calDayEventsArea" style="margin-bottom:16px;"></div>
+    <div style="border-top:1px solid var(--line); padding-top:14px;">
+      <p style="font-weight:700; font-size:13.5px; margin-bottom:8px;">+ 새 일정 추가</p>
+      <div class="field">
+        <label>제목 *</label>
+        <input type="text" id="cal_title" placeholder="예: 학부모설명회">
+      </div>
+      <div class="field">
+        <label>메모</label>
+        <input type="text" id="cal_memo" placeholder="선택 입력">
+      </div>
+      <button class="btn btn-primary" id="calAddEventBtn" style="width:100%; justify-content:center;">추가</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="calDayCloseBtn">닫기</button>
     </div>
   </div>
 </div>
@@ -1207,6 +1258,7 @@
   const tabTextbooks = document.getElementById('tabTextbooks');
   const tabHomework = document.getElementById('tabHomework');
   const tabParentSessions = document.getElementById('tabParentSessions');
+  const tabCalendar = document.getElementById('tabCalendar');
   const studentsView = document.getElementById('studentsView');
   const attendanceView = document.getElementById('attendanceView');
   const tuitionView = document.getElementById('tuitionView');
@@ -1215,9 +1267,10 @@
   const textbooksView = document.getElementById('textbooksView');
   const homeworkView = document.getElementById('homeworkView');
   const parentSessionsView = document.getElementById('parentSessionsView');
+  const calendarView = document.getElementById('calendarView');
 
   function setActiveTab(activeBtn){
-    [tabStudents, tabAttendance, tabTuition, tabCounseling, tabGrades, tabTextbooks, tabHomework, tabParentSessions].forEach(b => {
+    [tabStudents, tabAttendance, tabTuition, tabCounseling, tabGrades, tabTextbooks, tabHomework, tabParentSessions, tabCalendar].forEach(b => {
       b.className = (b === activeBtn) ? 'btn btn-primary tabBtn' : 'btn btn-ghost tabBtn';
     });
   }
@@ -1231,6 +1284,7 @@
     textbooksView.style.display = 'none';
     homeworkView.style.display = 'none';
     parentSessionsView.style.display = 'none';
+    calendarView.style.display = 'none';
   }
 
   tabStudents.onclick = () => {
@@ -1280,6 +1334,12 @@
     setActiveTab(tabParentSessions);
     showSessionsList();
     loadParentSessions();
+  };
+  tabCalendar.onclick = () => {
+    hideAllViews();
+    calendarView.style.display = 'block';
+    setActiveTab(tabCalendar);
+    loadCalendarEvents();
   };
 
   // 상담관리 내부 서브탭 (신규상담 / 재원상담)
@@ -3095,6 +3155,133 @@
     if(error){ showToast('삭제 실패: ' + error.message); return; }
     showToast('삭제됐어요');
     loadGuests(currentSessionId);
+  }
+
+  // ====== 캘린더 관련 ======
+  const calDayOverlay = document.getElementById('calDayOverlay');
+  const calGrid = document.getElementById('calGrid');
+  const calTitle = document.getElementById('calTitle');
+  let calendarEvents = [];
+  let calCurrentYear = new Date().getFullYear();
+  let calCurrentMonth = new Date().getMonth() + 1; // 1-12
+  let calSelectedDateStr = null;
+
+  document.getElementById('calPrevBtn').onclick = () => {
+    calCurrentMonth--;
+    if(calCurrentMonth < 1){ calCurrentMonth = 12; calCurrentYear--; }
+    renderCalendarGrid();
+  };
+  document.getElementById('calNextBtn').onclick = () => {
+    calCurrentMonth++;
+    if(calCurrentMonth > 12){ calCurrentMonth = 1; calCurrentYear++; }
+    renderCalendarGrid();
+  };
+
+  async function loadCalendarEvents(){
+    const { data, error } = await sb.from('calendar_events').select('*').order('event_date', { ascending: true });
+    if(error){
+      calGrid.innerHTML = `<div class="empty"><div class="big">⚠️</div>불러오지 못했어요.<br><small>${escapeHtml(error.message)}</small></div>`;
+      return;
+    }
+    calendarEvents = data || [];
+    renderCalendarGrid();
+  }
+
+  function renderCalendarGrid(){
+    calTitle.textContent = `${calCurrentYear}년 ${calCurrentMonth}월`;
+    const firstDay = new Date(calCurrentYear, calCurrentMonth - 1, 1);
+    const daysInMonth = new Date(calCurrentYear, calCurrentMonth, 0).getDate();
+    const startWeekday = firstDay.getDay(); // 0=일
+    const todayStr3 = todayStr();
+
+    const dows = ['일','월','화','수','목','금','토'];
+    let html = `<div class="cal-grid">`;
+    dows.forEach(d => { html += `<div class="cal-dow">${d}</div>`; });
+
+    for(let i = 0; i < startWeekday; i++){
+      html += `<div class="cal-cell empty"></div>`;
+    }
+
+    for(let d = 1; d <= daysInMonth; d++){
+      const dateStr = `${calCurrentYear}-${String(calCurrentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayEvents = calendarEvents.filter(e => e.event_date === dateStr);
+      const isToday = dateStr === todayStr3;
+      html += `<div class="cal-cell${isToday ? ' today' : ''}" data-date="${dateStr}">`;
+      html += `<div class="cal-daynum">${d}</div>`;
+      dayEvents.slice(0, 3).forEach(ev => {
+        html += `<div class="cal-event-chip">${escapeHtml(ev.title)}</div>`;
+      });
+      if(dayEvents.length > 3){
+        html += `<div class="cal-more">+${dayEvents.length - 3}개 더</div>`;
+      }
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+    calGrid.innerHTML = html;
+
+    calGrid.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
+      cell.addEventListener('click', () => openCalDayModal(cell.dataset.date));
+    });
+  }
+
+  function openCalDayModal(dateStr){
+    calSelectedDateStr = dateStr;
+    const d = new Date(dateStr + 'T00:00:00');
+    document.getElementById('calDayTitle').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 일정`;
+    document.getElementById('cal_title').value = '';
+    document.getElementById('cal_memo').value = '';
+    renderCalDayEvents();
+    calDayOverlay.classList.add('show');
+  }
+  document.getElementById('calDayCloseBtn').onclick = () => calDayOverlay.classList.remove('show');
+  calDayOverlay.addEventListener('click', (e) => { if(e.target === calDayOverlay) calDayOverlay.classList.remove('show'); });
+
+  function renderCalDayEvents(){
+    const dayEvents = calendarEvents.filter(e => e.event_date === calSelectedDateStr);
+    const area = document.getElementById('calDayEventsArea');
+    if(!dayEvents.length){
+      area.innerHTML = `<p style="color:var(--ink-soft); font-size:13.5px;">등록된 일정이 없어요.</p>`;
+      return;
+    }
+    area.innerHTML = dayEvents.map(ev => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+        <div>
+          <div style="font-weight:700;">${escapeHtml(ev.title)}</div>
+          ${ev.memo ? `<div style="font-size:12.5px; color:var(--ink-soft);">${escapeHtml(ev.memo)}</div>` : ''}
+        </div>
+        <button class="btn btn-danger btn-sm delCalEventBtn" data-id="${ev.id}">삭제</button>
+      </div>
+    `).join('');
+    area.querySelectorAll('.delCalEventBtn').forEach(btn => {
+      btn.onclick = () => deleteCalEvent(btn.dataset.id);
+    });
+  }
+
+  document.getElementById('calAddEventBtn').onclick = async () => {
+    const title = document.getElementById('cal_title').value.trim();
+    if(!title){ showToast('제목을 입력해주세요'); return; }
+    const payload = {
+      event_date: calSelectedDateStr,
+      title,
+      memo: document.getElementById('cal_memo').value || null,
+    };
+    const { error } = await sb.from('calendar_events').insert(payload);
+    if(error){ showToast('저장 실패: ' + error.message); return; }
+    showToast('일정이 추가됐어요');
+    document.getElementById('cal_title').value = '';
+    document.getElementById('cal_memo').value = '';
+    await loadCalendarEvents();
+    renderCalDayEvents();
+  };
+
+  async function deleteCalEvent(id){
+    if(!confirm('이 일정을 삭제할까요?')) return;
+    const { error } = await sb.from('calendar_events').delete().eq('id', id);
+    if(error){ showToast('삭제 실패: ' + error.message); return; }
+    showToast('삭제됐어요');
+    await loadCalendarEvents();
+    renderCalDayEvents();
   }
 
   // ====== 로그인 관련 ======
