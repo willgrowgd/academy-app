@@ -480,7 +480,8 @@
     <h2 id="calDayTitle">일정</h2>
     <div id="calDayEventsArea" style="margin-bottom:16px;"></div>
     <div style="border-top:1px solid var(--line); padding-top:14px;">
-      <p style="font-weight:700; font-size:13.5px; margin-bottom:8px;">+ 새 일정 추가</p>
+      <p id="calFormLabel" style="font-weight:700; font-size:13.5px; margin-bottom:8px;">+ 새 일정 추가</p>
+      <input type="hidden" id="cal_editId">
       <div class="field">
         <label>제목 *</label>
         <input type="text" id="cal_title" placeholder="예: 학부모설명회">
@@ -489,7 +490,15 @@
         <label>메모</label>
         <input type="text" id="cal_memo" placeholder="선택 입력">
       </div>
-      <button class="btn btn-primary" id="calAddEventBtn" style="width:100%; justify-content:center;">추가</button>
+      <div class="field">
+        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="cal_colorRed"> 빨간색으로 표시
+        </label>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" id="calAddEventBtn" style="flex:1; justify-content:center;">추가</button>
+        <button class="btn btn-ghost" id="calCancelEditBtn" style="display:none;">취소</button>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="calDayCloseBtn">닫기</button>
@@ -3209,7 +3218,8 @@
       html += `<div class="cal-cell${isToday ? ' today' : ''}" data-date="${dateStr}">`;
       html += `<div class="cal-daynum">${d}</div>`;
       dayEvents.slice(0, 3).forEach(ev => {
-        html += `<div class="cal-event-chip">${escapeHtml(ev.title)}</div>`;
+        const isRed = ev.color === 'red';
+        html += `<div class="cal-event-chip"${isRed ? ' style="color:#C0392B; font-weight:700; background:#FBEAE8;"' : ''}>${escapeHtml(ev.title)}</div>`;
       });
       if(dayEvents.length > 3){
         html += `<div class="cal-more">+${dayEvents.length - 3}개 더</div>`;
@@ -3229,13 +3239,33 @@
     calSelectedDateStr = dateStr;
     const d = new Date(dateStr + 'T00:00:00');
     document.getElementById('calDayTitle').textContent = `${d.getMonth()+1}월 ${d.getDate()}일 일정`;
-    document.getElementById('cal_title').value = '';
-    document.getElementById('cal_memo').value = '';
+    resetCalForm();
     renderCalDayEvents();
     calDayOverlay.classList.add('show');
   }
   document.getElementById('calDayCloseBtn').onclick = () => calDayOverlay.classList.remove('show');
   calDayOverlay.addEventListener('click', (e) => { if(e.target === calDayOverlay) calDayOverlay.classList.remove('show'); });
+
+  function resetCalForm(){
+    document.getElementById('cal_editId').value = '';
+    document.getElementById('cal_title').value = '';
+    document.getElementById('cal_memo').value = '';
+    document.getElementById('cal_colorRed').checked = false;
+    document.getElementById('calFormLabel').textContent = '+ 새 일정 추가';
+    document.getElementById('calAddEventBtn').textContent = '추가';
+    document.getElementById('calCancelEditBtn').style.display = 'none';
+  }
+  document.getElementById('calCancelEditBtn').onclick = resetCalForm;
+
+  function startEditCalEvent(ev){
+    document.getElementById('cal_editId').value = ev.id;
+    document.getElementById('cal_title').value = ev.title;
+    document.getElementById('cal_memo').value = ev.memo || '';
+    document.getElementById('cal_colorRed').checked = ev.color === 'red';
+    document.getElementById('calFormLabel').textContent = '일정 수정';
+    document.getElementById('calAddEventBtn').textContent = '수정 완료';
+    document.getElementById('calCancelEditBtn').style.display = 'inline-flex';
+  }
 
   function renderCalDayEvents(){
     const dayEvents = calendarEvents.filter(e => e.event_date === calSelectedDateStr);
@@ -3244,15 +3274,27 @@
       area.innerHTML = `<p style="color:var(--ink-soft); font-size:13.5px;">등록된 일정이 없어요.</p>`;
       return;
     }
-    area.innerHTML = dayEvents.map(ev => `
+    area.innerHTML = dayEvents.map(ev => {
+      const isRed = ev.color === 'red';
+      return `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
         <div>
-          <div style="font-weight:700;">${escapeHtml(ev.title)}</div>
+          <div style="font-weight:700;${isRed ? ' color:#C0392B;' : ''}">${escapeHtml(ev.title)}</div>
           ${ev.memo ? `<div style="font-size:12.5px; color:var(--ink-soft);">${escapeHtml(ev.memo)}</div>` : ''}
         </div>
-        <button class="btn btn-danger btn-sm delCalEventBtn" data-id="${ev.id}">삭제</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-ghost btn-sm editCalEventBtn" data-id="${ev.id}">수정</button>
+          <button class="btn btn-danger btn-sm delCalEventBtn" data-id="${ev.id}">삭제</button>
+        </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
+    area.querySelectorAll('.editCalEventBtn').forEach(btn => {
+      btn.onclick = () => {
+        const ev = dayEvents.find(e => e.id === btn.dataset.id);
+        if(ev) startEditCalEvent(ev);
+      };
+    });
     area.querySelectorAll('.delCalEventBtn').forEach(btn => {
       btn.onclick = () => deleteCalEvent(btn.dataset.id);
     });
@@ -3261,16 +3303,22 @@
   document.getElementById('calAddEventBtn').onclick = async () => {
     const title = document.getElementById('cal_title').value.trim();
     if(!title){ showToast('제목을 입력해주세요'); return; }
+    const editId = document.getElementById('cal_editId').value;
     const payload = {
       event_date: calSelectedDateStr,
       title,
       memo: document.getElementById('cal_memo').value || null,
+      color: document.getElementById('cal_colorRed').checked ? 'red' : 'default',
     };
-    const { error } = await sb.from('calendar_events').insert(payload);
+    let error;
+    if(editId){
+      ({ error } = await sb.from('calendar_events').update(payload).eq('id', editId));
+    } else {
+      ({ error } = await sb.from('calendar_events').insert(payload));
+    }
     if(error){ showToast('저장 실패: ' + error.message); return; }
-    showToast('일정이 추가됐어요');
-    document.getElementById('cal_title').value = '';
-    document.getElementById('cal_memo').value = '';
+    showToast(editId ? '수정됐어요' : '일정이 추가됐어요');
+    resetCalForm();
     await loadCalendarEvents();
     renderCalDayEvents();
   };
@@ -3280,6 +3328,7 @@
     const { error } = await sb.from('calendar_events').delete().eq('id', id);
     if(error){ showToast('삭제 실패: ' + error.message); return; }
     showToast('삭제됐어요');
+    resetCalForm();
     await loadCalendarEvents();
     renderCalDayEvents();
   }
